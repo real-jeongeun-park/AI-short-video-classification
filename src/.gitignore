@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+
+# Logs & Environment
+*.log
+.env
+.env.local
