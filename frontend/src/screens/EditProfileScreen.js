@@ -19,8 +19,8 @@ export default function EditProfileScreen({ navigation }) {
   const [username, setUsername] = useState(mockUser.username);
   const [email, setEmail] = useState(mockUser.email);
 
-  // 각 필드별로 "지금 수정 중인지" 상태를 따로 관리
-  const [editingField, setEditingField] = useState(null); // null | 'username' | 'email' | 'password'
+  // 아이디/이메일 필드별로 "지금 수정 중인지" 상태를 따로 관리
+  const [editingField, setEditingField] = useState(null); // null | 'username' | 'email'
 
   const toggleEdit = (field) => {
     setEditingField((prev) => (prev === field ? null : field));
@@ -49,7 +49,7 @@ export default function EditProfileScreen({ navigation }) {
           {mockUser.avatarUrl ? (
             <Image source={{ uri: mockUser.avatarUrl }} style={styles.avatar} />
           ) : (
-            <LinearGradient colors={[colors.gradientStart, colors.gradientEnd]} style={styles.avatar}>
+            <LinearGradient colors={[colors.primary, colors.danger]} style={styles.avatar}>
               <Feather name="user" size={40} color="#fff" />
             </LinearGradient>
           )}
@@ -79,10 +79,7 @@ export default function EditProfileScreen({ navigation }) {
 
         {/* 비밀번호 */}
         <Text style={styles.label}>비밀번호</Text>
-        <PasswordRow
-          editing={editingField === 'password'}
-          onToggle={() => toggleEdit('password')}
-        />
+        <PasswordRow />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -112,33 +109,127 @@ function EditableRow({ value, onChangeText, editing, onToggle, keyboardType }) {
   );
 }
 
-// 비밀번호: 평소엔 안내 문구만 보여주고, "변경" 누르면 새 비밀번호 입력창 + "변경완료"
-function PasswordRow({ editing, onToggle }) {
+// 비밀번호: 본인 확인(현재 비밀번호) → 새 비밀번호 입력 2단계 플로우
+function PasswordRow() {
+  const [step, setStep] = useState('idle'); // 'idle' | 'verify' | 'change'
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
+  const [error, setError] = useState('');
 
+  const resetAll = () => {
+    setStep('idle');
+    setCurrentPassword('');
+    setNewPassword('');
+    setNewPasswordConfirm('');
+    setError('');
+  };
+
+  const handleStart = () => {
+    setStep('verify');
+    setError('');
+  };
+
+  const handleVerify = () => {
+    // TODO: 실제로는 서버에 현재 비밀번호 검증 요청
+    if (currentPassword !== mockUser.password) {
+      setError('현재 비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    setError('');
+    setStep('change');
+  };
+
+  const handleChangeComplete = () => {
+    if (newPassword.length < 8) {
+      setError('새 비밀번호는 8자 이상이어야 합니다.');
+      return;
+    }
+    if (newPassword !== newPasswordConfirm) {
+      setError('새 비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    // TODO: 실제로는 서버에 새 비밀번호 저장 요청
+    setError('');
+    resetAll();
+  };
+
+  if (step === 'idle') {
+    return (
+      <View style={styles.fieldRow}>
+        <Text style={styles.passwordPlaceholder}>비밀번호 변경</Text>
+        <TouchableOpacity style={styles.changeBtn} onPress={handleStart}>
+          <Text style={styles.changeBtnText}>변경</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (step === 'verify') {
+    return (
+      <View>
+        <View style={[styles.fieldRow, styles.fieldRowEditing]}>
+          <TextInput
+            style={styles.fieldInput}
+            value={currentPassword}
+            onChangeText={(t) => {
+              setCurrentPassword(t);
+              if (error) setError('');
+            }}
+            placeholder="현재 비밀번호 입력"
+            placeholderTextColor={colors.textPlaceholder}
+            secureTextEntry
+            autoFocus
+          />
+          <TouchableOpacity onPress={resetAll} style={styles.cancelBtn}>
+            <Feather name="x" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.changeBtn, styles.changeBtnActive]} onPress={handleVerify}>
+            <Text style={styles.changeBtnTextActive}>확인</Text>
+          </TouchableOpacity>
+        </View>
+        {!!error && <Text style={styles.errorText}>{error}</Text>}
+      </View>
+    );
+  }
+
+  // step === 'change'
   return (
-    <View style={[styles.fieldRow, editing && styles.fieldRowEditing]}>
-      {editing ? (
+    <View>
+      <View style={[styles.fieldRow, styles.fieldRowEditing]}>
         <TextInput
           style={styles.fieldInput}
           value={newPassword}
-          onChangeText={setNewPassword}
+          onChangeText={(t) => {
+            setNewPassword(t);
+            if (error) setError('');
+          }}
           placeholder="새 비밀번호 입력"
           placeholderTextColor={colors.textPlaceholder}
           secureTextEntry
           autoFocus
         />
-      ) : (
-        <Text style={styles.passwordPlaceholder}>비밀번호 변경</Text>
-      )}
-      <TouchableOpacity
-        style={[styles.changeBtn, editing && styles.changeBtnActive]}
-        onPress={onToggle}
-      >
-        <Text style={[styles.changeBtnText, editing && styles.changeBtnTextActive]}>
-          {editing ? '변경완료' : '변경'}
-        </Text>
-      </TouchableOpacity>
+      </View>
+      <View style={[styles.fieldRow, styles.fieldRowEditing]}>
+        <TextInput
+          style={styles.fieldInput}
+          value={newPasswordConfirm}
+          onChangeText={(t) => {
+            setNewPasswordConfirm(t);
+            if (error) setError('');
+          }}
+          placeholder="새 비밀번호 확인"
+          placeholderTextColor={colors.textPlaceholder}
+          secureTextEntry
+        />
+        <TouchableOpacity onPress={resetAll} style={styles.cancelBtn}>
+          <Feather name="x" size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.changeBtn, styles.changeBtnActive]} onPress={handleChangeComplete}>
+          <Text style={styles.changeBtnTextActive}>변경완료</Text>
+        </TouchableOpacity>
+      </View>
+      {!!error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 }
@@ -190,4 +281,16 @@ const styles = StyleSheet.create({
   },
   changeBtnText: { color: colors.textPrimary, fontWeight: '600' },
   changeBtnTextActive: { color: '#0A0A0F' },
+
+  cancelBtn: {
+    marginLeft: spacing.sm,
+    padding: 4,
+  },
+  errorText: {
+    color: colors.danger,
+    fontSize: 12,
+    marginTop: -spacing.sm + 4,
+    marginBottom: spacing.md,
+    marginLeft: 4,
+  },
 });

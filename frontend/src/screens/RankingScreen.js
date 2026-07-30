@@ -21,7 +21,8 @@ export default function RankingScreen() {
           item.tags.some((t) => t.includes(keyword))
       );
     }
-    return list;
+    // 항상 판별 횟수(count) 기준 내림차순 정렬
+    return [...list].sort((a, b) => b.count - a.count);
   }, [filter, keyword]);
 
   return (
@@ -56,9 +57,9 @@ export default function RankingScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View style={styles.row}>
-            <Text style={styles.rank}>{item.rank}</Text>
+            <Text style={styles.rank}>{index + 1}</Text>
             <Image source={{ uri: item.thumbnail }} style={styles.thumb} />
             <View style={styles.rowInfo}>
               <Text numberOfLines={1} style={styles.url}>{item.url}</Text>

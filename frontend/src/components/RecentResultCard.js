@@ -31,6 +31,6 @@ const styles = StyleSheet.create({
   },
   image: { width: '100%', height: '100%' },
   badge: { position: 'absolute', top: 10, right: 10 },
-  caption: { color: colors.textSecondary, fontSize: 13, marginTop: spacing.sm },
+  caption: { color: colors.textPrimary, fontSize: 13, marginTop: spacing.sm },
   url: { color: colors.textSecondary, fontSize: 11, marginTop: 4 },
 });

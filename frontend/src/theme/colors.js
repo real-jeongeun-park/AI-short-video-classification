@@ -9,12 +9,10 @@ export const colors = {
   textSecondary: '#8A8A99',
   textPlaceholder: '#5C5C6B',
 
-  primary: '#1EE8B7',   // 민트 그린 (Real / 기본 액션)
+  primary: '#00F5C4',   // 민트 그린 (Real / 기본 액션)
   primaryDark: '#0FBF97',
-  danger: '#FF2D95',    // 핑크/마젠타 (AI 판정)
+  danger: '#FF3DDB',    // 핑크/마젠타 (AI 판정)
 
-  gradientStart: '#1EE8B7',
-  gradientEnd: '#B347F5',
 };
 
 export const typography = {

@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   card: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md, alignItems: 'center' },
   thumb: { width: 64, height: 64, borderRadius: radius.sm },
   info: { flex: 1, marginLeft: spacing.md },
-  caption: { color: colors.textSecondary, fontSize: 12 },
+  caption: { color: colors.textPrimary, fontSize: 12 },
   score: { fontSize: 22, fontWeight: '800', marginTop: 2 },
   url: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
   date: { color: colors.textSecondary, fontSize: 11, marginTop: 2 },

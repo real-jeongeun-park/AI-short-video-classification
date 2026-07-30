@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius, typography } from '../theme/colors';
@@ -12,8 +12,23 @@ const MENU = [
   { key: 'logout', label: '로그아웃', icon: 'log-out' },
 ];
 
+// 총 판정 수 기반 상위 퍼센트 계산 (임시 로직 - 추후 서버 값으로 교체)
+function calculatePercentile(totalJudgements) {
+  const tiers = [
+    { min: 100, percentile: 5 },
+    { min: 50, percentile: 10 },
+    { min: 30, percentile: 20 },
+    { min: 15, percentile: 35 },
+    { min: 5, percentile: 60 },
+    { min: 0, percentile: 90 },
+  ];
+  const matched = tiers.find((t) => totalJudgements >= t.min);
+  return matched ? matched.percentile : 90;
+}
+
 export default function ProfileScreen({ navigation }) {
   const { username, email, stats } = mockUser;
+  const percentile = calculatePercentile(stats.totalJudgements);
 
   const handleMenuPress = (key) => {
     if (key === 'edit') navigation.navigate('EditProfile');
@@ -28,7 +43,7 @@ export default function ProfileScreen({ navigation }) {
         {mockUser.avatarUrl ? (
           <Image source={{ uri: mockUser.avatarUrl }} style={styles.avatar} />
         ) : (
-          <LinearGradient colors={[colors.gradientStart, colors.gradientEnd]} style={styles.avatar}>
+          <LinearGradient colors={[colors.primary, colors.danger]} style={styles.avatar}>
             <Feather name="user" size={40} color="#fff" />
           </LinearGradient>
         )}
@@ -37,9 +52,32 @@ export default function ProfileScreen({ navigation }) {
       <Text style={styles.email}>{email}</Text>
 
       <View style={styles.statRow}>
-        <Stat label="총 판정 수" value={stats.totalJudgements} color={colors.textPrimary} />
-        <Stat label="AI 탐지" value={stats.aiDetected} color={colors.danger} />
-        <Stat label="Real 확인" value={stats.realConfirmed} color={colors.primary} />
+        {/* 좌측: 총 판정 수 */}
+        <View style={styles.countCard}>
+          <Text style={styles.countValue}>{stats.totalJudgements}</Text>
+          <Text style={styles.countLabel}>총 판정 수</Text>
+        </View>
+
+        {/* 우측: 상위 n% 카드 */}
+        <View style={styles.percentileCard}>
+          <LinearGradient
+            colors={[colors.gradientStart + '22', colors.danger + '22']}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
+          <View style={styles.percentileIconWrap}>
+            <Feather name="award" size={23} color={colors.danger} />
+          </View>
+          <Text style={styles.percentileText}>
+            <Text style={styles.percentileUsername}>{username}</Text>
+            <Text style={styles.percentileSub}> 님은</Text>
+          </Text>
+          <Text style={styles.percentileText}>
+            <Text style={styles.percentileValue}>상위 {percentile}%</Text>
+            <Text style={styles.percentileSub}> 사용자입니다</Text>
+          </Text>
+        </View>
       </View>
 
       <View style={styles.menuCard}>
@@ -58,25 +96,46 @@ export default function ProfileScreen({ navigation }) {
   );
 }
 
-function Stat({ label, value, color }) {
-  return (
-    <View style={styles.statBox}>
-      <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg, alignItems: 'center',paddingTop: 40 },
+  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg, alignItems: 'center', paddingTop: 40 },
   avatarWrap: { marginTop: spacing.xl },
   avatar: { width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center' },
   username: { ...typography.h2, color: colors.textPrimary, marginTop: spacing.md },
   email: { color: colors.textSecondary, marginTop: 4 },
+
   statRow: { flexDirection: 'row', width: '100%', marginTop: spacing.xl },
-  statBox: { flex: 1, backgroundColor: colors.surface, borderRadius: radius.md, alignItems: 'center', paddingVertical: spacing.md, marginHorizontal: 4 },
-  statValue: { fontSize: 24, fontWeight: '800' },
-  statLabel: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
+
+  countCard: {
+    width: 96,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    marginRight: spacing.sm,
+  },
+  countValue: { fontSize: 28, fontWeight: '800', color: colors.textPrimary },
+  countLabel: { color: colors.textSecondary, fontSize: 11, marginTop: 4, textAlign: 'center' },
+
+  percentileCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  percentileIconWrap: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+  },
+  percentileText: { fontSize: 15, lineHeight: 22 },
+  percentileUsername: { color: colors.textPrimary, fontWeight: '700' },
+  percentileSub: { color: colors.textSecondary },
+  percentileValue: { color: colors.primary, fontWeight: '800', fontSize: 17 },
+
   menuCard: { width: '100%', backgroundColor: colors.surface, borderRadius: radius.md, marginTop: spacing.lg },
   menuRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md, paddingHorizontal: spacing.md },
   menuRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },

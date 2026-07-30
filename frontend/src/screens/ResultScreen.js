@@ -58,8 +58,8 @@ export default function ResultScreen({ navigation, route }) {
 
       <View style={styles.actionRow}>
         <TouchableOpacity style={styles.saveBtn}>
-          <Feather name="bookmark" size={16} color={colors.primary} />
-          <Text style={styles.saveBtnText}>결과 저장</Text>
+          <Feather name="bookmark" size={16} color={accent} />
+          <Text style={[styles.saveBtnText, { color: accent }]}>결과 저장</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.shareBtn, { backgroundColor: accent }]}>
           <Text style={styles.shareBtnText}>공유하기</Text>
@@ -94,9 +94,9 @@ const styles = StyleSheet.create({
   thumb: { width: 100, height: 130, borderRadius: radius.md },
   badge: { position: 'absolute', top: 7, left: 7},
   resultInfo: { flex: 1, marginLeft: spacing.md, justifyContent: 'center' },
-  caption: { color: colors.textSecondary },
+  caption: { fontSize: 15,color: colors.textPrimary },
   scoreText: { fontSize: 34, fontWeight: '800', marginTop: 4 },
-  description: { color: colors.textSecondary, marginTop: spacing.sm },
+  description: { fontSize: 16,color: colors.textSecondary, marginTop: spacing.sm },
   sectionTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '700', marginTop: 60, marginBottom: spacing.md },
   evidenceRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
   evidenceBarBg: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surfaceAlt, overflow: 'hidden', marginRight: spacing.sm },
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     marginRight: spacing.md,
   },
-  saveBtnText: { color: colors.primary, marginLeft: spacing.sm, fontWeight: '700' },
+  saveBtnText: { marginLeft: spacing.sm, fontWeight: '700' },
   shareBtn: { flex: 1.5, height: 56, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   shareBtnText: { color: '#0A0A0F', fontWeight: '700' },
 });

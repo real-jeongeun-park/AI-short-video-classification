@@ -4,6 +4,7 @@
 export const mockUser = {
   username: '아이즈온',
   email: 'aizeon@email.com',
+  password: '12345678',
   avatarUrl: null,
   stats: {
     totalJudgements: 18,
@@ -19,6 +20,12 @@ export const mockRecentResults = [
     label: 'AI',
     aiScore: 98,
     url: 'instagram.com/reel/abc',
+    description: '이 숏폼은 AI가 생성했을 확률이 높아요',
+    evidence: [
+      { key: '움직임 패턴', score: 92 },
+      { key: '텍스처 분석', score: 88 },
+      { key: '메타 데이터', score: 79 },
+    ],
   },
   {
     id: 'r2',
@@ -26,6 +33,12 @@ export const mockRecentResults = [
     label: 'Real',
     aiScore: 11,
     url: 'instagram.com/reel/abc',
+    description: '이 숏폼은 AI가 생성했을 확률이 낮아요',
+    evidence: [
+      { key: '움직임 패턴', score: 15 },
+      { key: '텍스처 분석', score: 9 },
+      { key: '메타 데이터', score: 12 },
+    ],
   },
   {
     id: 'r3',
@@ -33,6 +46,12 @@ export const mockRecentResults = [
     label: 'AI',
     aiScore: 85,
     url: 'instagram.com/reel/abc',
+    description: '이 숏폼은 AI가 생성했을 확률이 높아요',
+    evidence: [
+      { key: '움직임 패턴', score: 80 },
+      { key: '텍스처 분석', score: 76 },
+      { key: '메타 데이터', score: 70 },
+    ],
   },
 ];
 
