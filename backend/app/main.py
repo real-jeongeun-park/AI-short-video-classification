@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from app.database import engine, Base
 import app.models  # 이 import가 있어야 Base가 모든 테이블을 인식함
 
+from app.routers import auth
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """서버 시작 시 테이블 자동 생성 (없으면 만들고, 있으면 그냥 넘어감)"""
@@ -14,6 +16,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Aizeon API", lifespan=lifespan)
+
+app.include_router(auth.router)
 
 @app.get("/")
 def root():
