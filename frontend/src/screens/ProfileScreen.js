@@ -28,14 +28,18 @@ function calculatePercentile(totalJudgements) {
 }
 
 export default function ProfileScreen({ navigation }) {
+  const [userId, setUserId] = useState(null);
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
+  const [detectCount, setDetectCount] = useState(0);
 
   useEffect(() => {
     const loadUserInfo = async () => {
+      const savedUserId = await SecureStore.getItemAsync("userId");
       const savedNickname = await SecureStore.getItemAsync("nickname");
       const savedEmail = await SecureStore.getItemAsync("email");
 
+      if (savedUserId) setUserId(savedUserId);
       if (savedNickname) setNickname(savedNickname);
       if (savedEmail) setEmail(savedEmail);
     };
@@ -52,6 +56,36 @@ export default function ProfileScreen({ navigation }) {
     // 'about'은 임시로 동작 없음
   };
 
+  useEffect(() => {
+    const handleDetectCount = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.EXPO_PUBLIC_API_URL}/users/detectCount`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ user_id: Number(userId) }),
+          }
+        );
+      
+        const data = await response.json();
+        
+        if (!response.ok){
+          alert(data.detail);
+          return;
+        }
+
+        setDetectCount(data.count);        
+      } catch (error){
+        console.error("handleDetectCount error:", error);
+      }
+    };
+
+    handleDetectCount();
+  }, [userId]);
+  
   return (
     <View style={styles.container}>
       <View style={styles.avatarWrap}>
@@ -65,7 +99,7 @@ export default function ProfileScreen({ navigation }) {
       <View style={styles.statRow}>
         {/* 좌측: 총 판정 수 */}
         <View style={styles.countCard}>
-          <Text style={styles.countValue}>?</Text>
+          <Text style={styles.countValue}>{detectCount}</Text>
           <Text style={styles.countLabel}>총 판정 수</Text>
         </View>
 

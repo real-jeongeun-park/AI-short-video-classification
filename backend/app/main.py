@@ -9,6 +9,7 @@ import app.models  # 이 import가 있어야 Base가 모든 테이블을 인식�
 from contextlib import asynccontextmanager
 
 from app.api.auth import router as auth_router
+from app.api.users import router as users_router
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
@@ -28,6 +29,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(users_router)
 
 @app.get("/")
 def root():

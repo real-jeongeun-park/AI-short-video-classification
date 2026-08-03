@@ -26,6 +26,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             )
 
         return {
+            "user_id": user.id,
             "nickname": user.nickname,
             "email": user.email
         }

@@ -33,8 +33,9 @@ export default function LoginScreen({ navigation }) {
         return;
       }
   
-      await SecureStore.setItemAsync("email", String(data.email));
+      await SecureStore.setItemAsync("userId", String(data.user_id));
       await SecureStore.setItemAsync("nickname", String(data.nickname));
+      await SecureStore.setItemAsync("email", String(data.email));
     
       navigation.replace('Main');
             
