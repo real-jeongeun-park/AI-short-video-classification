@@ -3,20 +3,51 @@ import { View, Text, TextInput, StyleSheet, SafeAreaView } from 'react-native';
 import { colors, typography, spacing, radius } from '../theme/colors';
 import PrimaryButton from '../components/PrimaryButton';
 
+import * as SecureStore from 'expo-secure-store';
+
 export default function LoginScreen({ navigation }) {
   // TODO: 실제 로그인 연동 전까지 임시 상태값만 사용
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    // 하드코딩: 어떤 값을 입력해도 홈으로 이동
-    navigation.replace('Main');
-  };
+  const handleLogin = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
+       );
+    
+      const data = await response.json();
+  
+      if (!response.ok) {
+        alert(data.detail);
+        return;
+      }
+  
+      await SecureStore.setItemAsync("email", String(data.email));
+      await SecureStore.setItemAsync("nickname", String(data.nickname));
+    
+      navigation.replace('Main');
+            
+    } catch (error) {
+      console.error(error);
+      alert("로그인 실패");
+    }
+   };
 
   return (
     <View style={styles.container}>
       <Text style={[typography.h1, { color: colors.textPrimary }]}>로그인</Text>
-      <Text style={styles.subtitle}>아이즈온에 오신 걸 환영해요</Text>
+      <Text style={styles.subtitle}>아이즈온에 오신 걸 환영합니다.</Text>
 
       <Text style={styles.label}>이메일</Text>
       <TextInput

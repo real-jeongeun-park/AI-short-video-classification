@@ -1,49 +1,60 @@
-# 아이즈온 (AI's on) - React Native (Expo)
+# 👁️ AI's On
 
-디자인 PDF 기반으로 만든 프론트엔드 스캐폴드입니다. **모든 데이터는 하드코딩(mock)** 되어 있으며,
-`src/data/mockData.js` 파일만 수정하면 화면 전체에 반영됩니다.
+AI's On은 인터넷 동영상의 AI 생성 여부를 판별하는 앱 서비스입니다.
 
-## 실행 방법
+## 🔥 Commit Convention 
+
+- `Feat`: 새로운 기능을 추가한 경우
+- `Fix`: 버그를 수정한 경우
+- `Design`: CSS 등 사용자 UI 디자인을 변경한 경우
+- `Docs`: 문서(README 등)를 수정한 경우
+- `Style`: 코드 포맷 변경, 세미콜론 누락 등 기능 변경이 없는 경우
+- `Refactor`: 코드를 리팩토링한 경우
+- `Test`: 테스트 코드를 추가하거나 수정한 경우
+- `Comment`: 주석을 추가하거나 변경한 경우
+- `Chore`: 빌드 설정, 패키지 매니저 설정 등 기타 변경사항
+- `Remove`: 파일 또는 코드를 삭제한 경우
+- `Rename`: 파일 또는 폴더명을 수정하거나 이동한 경우
+- `!HOTFIX`: 치명적인 버그를 긴급하게 수정한 경우
+- `!BREAKING CHANGE`: 커다란 API 변경이 있는 경우
+
+## 🚀 실행 방법
+
+### 1단계 — 레포지토리 clone
+
 ```bash
-npm install
-npx expo start
+git clone https://github.com/real-jeongeun-park/AI-short-video-classification
 ```
 
-## 폴더 구조
-```
-App.js
-src/
-  theme/colors.js       # 컬러/타이포/간격 토큰
-  data/mockData.js       # ⭐ 하드코딩 목데이터 (모델 연동 시 여기부터 교체)
-  components/            # 공용 컴포넌트 (버튼, 뱃지, 카드)
-  screens/
-    SplashScreen.js
-    LoginScreen.js
-    SignupScreen.js
-    HomeScreen.js
-    AnalyzingScreen.js
-    ResultScreen.js
-    RankingScreen.js
-    HistoryScreen.js
-    ProfileScreen.js
-    EditProfileScreen.js
-    SavedResultsScreen.js
-  navigation/index.js     # Stack + Bottom Tab 네비게이션 구조
+### 2단계 — Docker 컨테이너 빌드 및 실행
+
+```bash
+cd backend
+docker compose up --build
 ```
 
-## 화면 흐름
-- Splash → Login/Signup → Main(Bottom Tabs: 홈/랭킹/기록/프로필)
-- 홈 → 링크 분석(분석중) → 분석 결과
-- 프로필 → 프로필 수정 / 저장된 결과
+> Docker Desktop이 실행 중인 상태여야 합니다.
 
-## 모델 연동 시 할 일 (TODO 표시된 곳)
-1. `HomeScreen.js`의 `handleAnalyze` — 실제 분석 API 호출 후 `Analyzing` 화면으로 이동
-2. `AnalyzingScreen.js` — setTimeout 대신 polling/websocket으로 진행 상태 갱신, 완료 시 실제 결과로 `Result` 이동
-3. `LoginScreen.js` / `SignupScreen.js` — 실제 인증 API 연동 및 에러 처리
-4. `mockData.js` 전체 — 로그인 사용자 정보, 랭킹, 기록, 저장 결과를 서버 응답으로 교체
+### 3단계 — 백엔드 서버 실행 (터미널 1)
 
-## 참고
-- 아이콘: `@expo/vector-icons` (Feather)
-- 그라데이션: `expo-linear-gradient`
-- 진행률 원형 바: `react-native-progress`
-- 이미지: 임시로 picsum.photos 플레이스홀더 사용 (실제 썸네일 URL로 교체 필요)
+```bash
+cd backend
+uvicorn app.main:app --reload
+```
+
+### 4단계 — ngrok 터널 연결 (터미널 2)
+
+```bash
+ngrok http --domain={your-domain} 8000
+```
+
+> `{your-domain}` 부분은 본인의 ngrok 고정 도메인으로 교체하세요.
+
+### 5단계 — 프론트엔드 실행 (터미널 3)
+
+```bash
+cd frontend
+npx expo start --tunnel
+```
+
+> Expo Go 앱으로 QR코드를 스캔하면 앱이 실행됩니다.

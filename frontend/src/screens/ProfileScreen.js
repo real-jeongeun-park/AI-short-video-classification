@@ -3,7 +3,8 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius, typography } from '../theme/colors';
-import { mockUser } from '../data/mockData';
+import * as SecureStore from "expo-secure-store";
+import { useEffect, useState } from "react";
 
 const MENU = [
   { key: 'edit', label: '프로필 수정', icon: 'user' },
@@ -27,8 +28,22 @@ function calculatePercentile(totalJudgements) {
 }
 
 export default function ProfileScreen({ navigation }) {
-  const { username, email, stats } = mockUser;
-  const percentile = calculatePercentile(stats.totalJudgements);
+  const [nickname, setNickname] = useState("");
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      const savedNickname = await SecureStore.getItemAsync("nickname");
+      const savedEmail = await SecureStore.getItemAsync("email");
+
+      if (savedNickname) setNickname(savedNickname);
+      if (savedEmail) setEmail(savedEmail);
+    };
+
+    loadUserInfo();
+  }, []);
+
+  const percentile = calculatePercentile(100);
 
   const handleMenuPress = (key) => {
     if (key === 'edit') navigation.navigate('EditProfile');
@@ -40,21 +55,17 @@ export default function ProfileScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.avatarWrap}>
-        {mockUser.avatarUrl ? (
-          <Image source={{ uri: mockUser.avatarUrl }} style={styles.avatar} />
-        ) : (
-          <LinearGradient colors={[colors.primary, colors.danger]} style={styles.avatar}>
-            <Feather name="user" size={40} color="#fff" />
-          </LinearGradient>
-        )}
+        <LinearGradient colors={[colors.primary, colors.danger]} style={styles.avatar}>
+          <Feather name="user" size={40} color="#fff" />
+        </LinearGradient>
       </View>
-      <Text style={styles.username}>{username}</Text>
+      <Text style={styles.nickname}>{nickname}</Text>
       <Text style={styles.email}>{email}</Text>
 
       <View style={styles.statRow}>
         {/* 좌측: 총 판정 수 */}
         <View style={styles.countCard}>
-          <Text style={styles.countValue}>{stats.totalJudgements}</Text>
+          <Text style={styles.countValue}>?</Text>
           <Text style={styles.countLabel}>총 판정 수</Text>
         </View>
 
@@ -70,7 +81,7 @@ export default function ProfileScreen({ navigation }) {
             <Feather name="award" size={23} color={colors.danger} />
           </View>
           <Text style={styles.percentileText}>
-            <Text style={styles.percentileUsername}>{username}</Text>
+            <Text style={styles.percentileUsername}>{nickname}</Text>
             <Text style={styles.percentileSub}> 님은</Text>
           </Text>
           <Text style={styles.percentileText}>
@@ -100,7 +111,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg, alignItems: 'center', paddingTop: 40 },
   avatarWrap: { marginTop: spacing.xl },
   avatar: { width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center' },
-  username: { ...typography.h2, color: colors.textPrimary, marginTop: spacing.md },
+  nickname: { ...typography.h2, color: colors.textPrimary, marginTop: spacing.md },
   email: { color: colors.textSecondary, marginTop: 4 },
 
   statRow: { flexDirection: 'row', width: '100%', marginTop: spacing.xl },
