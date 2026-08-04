@@ -13,7 +13,6 @@ from app.api.users import router as users_router
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-from app.routers import auth
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -32,8 +31,6 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(users_router)
-
-app.include_router(auth.router)
 
 @app.get("/")
 def root():

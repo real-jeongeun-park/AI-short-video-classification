@@ -1,12 +1,72 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, SafeAreaView, FlatList, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../theme/colors';
+import * as SecureStore from "expo-secure-store";
+
 import { mockSavedAI, mockSavedReal } from '../data/mockData';
 
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+}
+
 export default function SavedResultsScreen({ navigation }) {
+  const [userId, setUserId] = useState(null);
   const [tab, setTab] = useState('AI');
-  const data = tab === 'AI' ? mockSavedAI : mockSavedReal;
+  const [trueCount, setTrueCount] = useState(0); // AI Count
+  const [trueResults, setTrueResults] = useState([]); // AI Results
+  const [falseCount, setFalseCount] = useState(0); // Real Counnt
+  const [falseResults, setFalseResults] = useState([]) // Real Results
+
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      const savedUserId = await SecureStore.getItemAsync("userId");
+      if (savedUserId) setUserId(savedUserId);
+    };
+
+    loadUserInfo();
+  }, []);
+
+  useEffect(() => {
+    const handleSavedResults = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.EXPO_PUBLIC_API_URL}/users/saved-results`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              user_id: Number(userId),
+            }),
+          }
+        );
+      
+        const data = await response.json();
+        
+        if (!response.ok){
+          alert(data.detail);
+          return;
+        }
+
+        setTrueCount(data.true_count);
+        setTrueResults(data.true_results);
+        setFalseCount(data.false_count);
+        setFalseResults(data.false_results);
+
+      } catch (error){
+        console.error("handleSavedResults error:", error);
+      }
+    };
+
+    handleSavedResults();
+  }, [userId, tab]);
+
   const accent = tab === 'AI' ? colors.danger : colors.primary;
 
   return (
@@ -25,7 +85,7 @@ export default function SavedResultsScreen({ navigation }) {
           onPress={() => setTab('AI')}
         >
           <Text style={[styles.tabText, tab === 'AI' && styles.tabTextActive]}>
-            AI 생성 {mockSavedAI.length}
+            AI 생성 {trueCount}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -33,23 +93,23 @@ export default function SavedResultsScreen({ navigation }) {
           onPress={() => setTab('Real')}
         >
           <Text style={[styles.tabText, tab === 'Real' && { color: '#0A0A0F' }]}>
-            Real 콘텐츠 {mockSavedReal.length}
+            Real 콘텐츠 {falseCount}
           </Text>
         </TouchableOpacity>
       </View>
 
       <FlatList
-        data={data}
-        keyExtractor={(item) => item.id}
+        data={tab === 'AI' ? trueResults : falseResults}
+        keyExtractor={(item) => String(item.video_id)}
         contentContainerStyle={{ paddingTop: spacing.md, paddingBottom: spacing.xl }}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Image source={{ uri: item.thumbnail }} style={styles.thumb} />
             <View style={styles.info}>
               <Text style={styles.caption}>AI 생성 확률</Text>
-              <Text style={[styles.score, { color: accent }]}>{item.aiScore}%</Text>
+              <Text style={[styles.score, { color: accent }]}>{(item.ai_probability * 100).toFixed(1)}%</Text>
               <Text style={styles.url}>{item.url}</Text>
-              <Text style={styles.date}>{item.date}</Text>
+              <Text style={styles.date}>{formatDate(item.date)}</Text>
             </View>
             <View style={[styles.bookmark, { backgroundColor: accent }]}>
               <Feather name="bookmark" size={16} color="#0A0A0F" />

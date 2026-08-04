@@ -60,7 +60,7 @@ export default function ProfileScreen({ navigation }) {
     const handleDetectCount = async () => {
       try {
         const response = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL}/users/detectCount`,
+          `${process.env.EXPO_PUBLIC_API_URL}/users/detect-count`,
           {
             method: "POST",
             headers: {
