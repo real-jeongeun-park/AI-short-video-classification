@@ -19,17 +19,17 @@ export default function SignupScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl }}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginBottom: spacing.lg }}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginBottom: 40 }}>
           <Feather name="arrow-left" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
 
         <Text style={[typography.h1, { color: colors.textPrimary }]}>회원가입</Text>
         <Text style={styles.subtitle}>AI 숏폼 콘텐츠 판별을 시작해보세요</Text>
 
-        <Text style={styles.label}>아이디</Text>
+        <Text style={styles.label}>닉네임</Text>
         <TextInput
           style={[styles.input, styles.inputFocused]}
-          placeholder="나의 아이디"
+          placeholder="나의 닉네임"
           placeholderTextColor={colors.textPlaceholder}
           value={username}
           onChangeText={setUsername}
@@ -76,7 +76,7 @@ export default function SignupScreen({ navigation }) {
           <Text style={styles.checkboxLabel}>이용약관 및 개인정보처리 방침에 동의합니다.</Text>
         </TouchableOpacity>
 
-        <PrimaryButton title="로그인" onPress={handleSignup} style={{ marginTop: spacing.lg }} />
+        <PrimaryButton title="회원가입" onPress={handleSignup} style={{ marginTop: spacing.lg }} />
 
         <Text style={styles.footerText}>
           이미 계정이 있어요{' '}
@@ -91,7 +91,7 @@ export default function SignupScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg,paddingTop: spacing.xl },
-  subtitle: { color: colors.textSecondary, marginTop: spacing.sm, marginBottom: spacing.lg },
+  subtitle: { color: colors.textSecondary, marginTop: spacing.sm, marginBottom: 40 },
   label: { color: colors.primary, marginBottom: spacing.sm, fontSize: 13 },
   input: {
     backgroundColor: colors.surface,
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   inputFocused: { borderColor: colors.primary },
-  checkboxRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm },
+  checkboxRow: { flexDirection: 'row', alignItems: 'center', marginTop: 40 },
   checkbox: {
     width: 20,
     height: 20,

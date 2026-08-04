@@ -69,6 +69,18 @@ export default function SavedResultsScreen({ navigation }) {
 
   const accent = tab === 'AI' ? colors.danger : colors.primary;
 
+  const data = useMemo(() => {
+    const list = [...rawData];
+    if (sort === 'AI 생성 확률순') {
+      // AI 탭: 내림차순 / Real 탭: 오름차순
+      return tab === 'AI'
+        ? list.sort((a, b) => b.aiScore - a.aiScore)
+        : list.sort((a, b) => a.aiScore - b.aiScore);
+    }
+    // 최신순: date 문자열 기준 내림차순 (예: '2026.06.25')
+    return list.sort((a, b) => (a.date < b.date ? 1 : -1));
+  }, [rawData, sort, tab]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -81,7 +93,13 @@ export default function SavedResultsScreen({ navigation }) {
 
       <View style={styles.tabRow}>
         <TouchableOpacity
-          style={[styles.tab, tab === 'AI' && { backgroundColor: colors.danger }]}
+          style={[
+            styles.tab,
+            tab === 'AI' && {
+              backgroundColor: colors.danger + '22',
+              borderColor: colors.danger,
+            },
+          ]}
           onPress={() => setTab('AI')}
         >
           <Text style={[styles.tabText, tab === 'AI' && styles.tabTextActive]}>
@@ -89,7 +107,13 @@ export default function SavedResultsScreen({ navigation }) {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, tab === 'Real' && { backgroundColor: colors.primary }]}
+          style={[
+            styles.tab,
+            tab === 'Real' && {
+              backgroundColor: colors.primary + '22',
+              borderColor: colors.primary,
+            },
+          ]}
           onPress={() => setTab('Real')}
         >
           <Text style={[styles.tabText, tab === 'Real' && { color: '#0A0A0F' }]}>
@@ -98,12 +122,32 @@ export default function SavedResultsScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.sortWrap}>
+        <TouchableOpacity onPress={() => setSortOpen(!sortOpen)} style={styles.sortBtn}>
+          <Text style={styles.sortText}>{sort}</Text>
+          <Feather name="chevron-down" size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
+        {sortOpen && (
+          <View style={styles.sortMenu}>
+            {SORTS.map((s) => (
+              <TouchableOpacity key={s} onPress={() => { setSort(s); setSortOpen(false); }}>
+                <Text style={[styles.sortOption, s === sort && { color: colors.primary }]}>{s}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+
       <FlatList
         data={tab === 'AI' ? trueResults : falseResults}
         keyExtractor={(item) => String(item.video_id)}
         contentContainerStyle={{ paddingTop: spacing.md, paddingBottom: spacing.xl }}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={styles.card}
+            onPress={() => navigation.navigate('Result', { result: item })}
+          >
             <Image source={{ uri: item.thumbnail }} style={styles.thumb} />
             <View style={styles.info}>
               <Text style={styles.caption}>AI 생성 확률</Text>
@@ -111,10 +155,10 @@ export default function SavedResultsScreen({ navigation }) {
               <Text style={styles.url}>{item.url}</Text>
               <Text style={styles.date}>{formatDate(item.date)}</Text>
             </View>
-            <View style={[styles.bookmark, { backgroundColor: accent }]}>
-              <Feather name="bookmark" size={16} color="#0A0A0F" />
+            <View style={[styles.bookmark, { backgroundColor: accent + '22', borderWidth: 0.5, borderColor: accent }]}>
+              <Feather name="bookmark" size={16} color={accent} />
             </View>
-          </View>
+          </TouchableOpacity>
         )}
       />
     </View>
@@ -122,19 +166,33 @@ export default function SavedResultsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg,paddingTop: spacing.xl },
+  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg, paddingTop: spacing.xl },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '700' },
   tabRow: { flexDirection: 'row', backgroundColor: colors.surfaceAlt, borderRadius: radius.pill, padding: 4, marginTop: 50 },
-  tab: { flex: 1, paddingVertical: 10, borderRadius: radius.pill, alignItems: 'center', },
-  tabText: { color: colors.textSecondary, fontWeight: '700', },
-  tabTextActive: { color: '#fff' },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: 'transparent',
+  },
+  tabText: { color: colors.textSecondary, fontWeight: '700' },
+  sortWrap: { alignItems: 'flex-end', marginTop: spacing.md, marginBottom: spacing.md },
+  sortBtn: { flexDirection: 'row', alignItems: 'center' },
+  sortText: { color: colors.textSecondary, marginRight: 4 },
+  sortMenu: {
+    position: 'absolute', top: 24, right: 0, backgroundColor: colors.surface,
+    borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, padding: spacing.sm, zIndex: 10,
+  },
+  sortOption: { color: colors.textSecondary, paddingVertical: 6, paddingHorizontal: spacing.sm },
   card: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md, alignItems: 'center' },
-  thumb: { width: 64, height: 64, borderRadius: radius.sm },
-  info: { flex: 1, marginLeft: spacing.md },
-  caption: { color: colors.textSecondary, fontSize: 12 },
-  score: { fontSize: 22, fontWeight: '800', marginTop: 2 },
-  url: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
-  date: { color: colors.textSecondary, fontSize: 11, marginTop: 2 },
-  bookmark: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  thumb: { width: 84, height: 84, borderRadius: radius.md },
+  info: { flex: 1, marginLeft: spacing.md, justifyContent: 'center' },
+  itemTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '700' },
+  caption: { color: colors.textSecondary, fontSize: 13, marginTop: 10 },
+  scoreInline: { fontSize: 13, fontWeight: '600' },
+  date: { color: colors.textSecondary, fontSize: 12, marginTop: spacing.xs },
+   bookmark: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 });

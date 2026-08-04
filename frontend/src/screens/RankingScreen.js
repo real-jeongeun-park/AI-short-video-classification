@@ -2,12 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, TextInput, Image, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../theme/colors';
-import LabelBadge from '../components/LabelBadge';
 import { mockRanking } from '../data/mockData';
 
 const FILTERS = ['전체', 'AI', 'Real'];
 
-export default function RankingScreen() {
+export default function RankingScreen({ navigation }) {
   const [filter, setFilter] = useState('전체');
   const [keyword, setKeyword] = useState('');
 
@@ -17,8 +16,8 @@ export default function RankingScreen() {
     if (keyword.trim()) {
       list = list.filter(
         (item) =>
-          item.url.toLowerCase().includes(keyword.toLowerCase()) ||
-          item.tags.some((t) => t.includes(keyword))
+          item.title?.toLowerCase().includes(keyword.toLowerCase()) ||
+          item.keywords?.some((k) => k.includes(keyword)) // item.tags -> item.keywords로 수정 및 옵셔널 체이닝 추가
       );
     }
     // 항상 판별 횟수(count) 기준 내림차순 정렬
@@ -27,7 +26,7 @@ export default function RankingScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>실시간 랭킹</Text>
+      <Text style={styles.headertitle}>실시간 랭킹</Text>
 
       <View style={styles.searchBox}>
         <TextInput
@@ -57,22 +56,35 @@ export default function RankingScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item, index }) => (
-          <View style={styles.row}>
-            <Text style={styles.rank}>{index + 1}</Text>
-            <Image source={{ uri: item.thumbnail }} style={styles.thumb} />
-            <View style={styles.rowInfo}>
-              <Text numberOfLines={1} style={styles.url}>{item.url}</Text>
-              <Text style={styles.count}>{item.count.toLocaleString()}회 판별</Text>
-              <View style={styles.tagRow}>
-                {item.tags.map((t) => (
-                  <Text key={t} style={styles.tag}>#{t}</Text>
-                ))}
+        renderItem={({ item, index }) => {
+          const isAI = item.label === 'AI';
+          const accent = isAI ? colors.danger : colors.primary;
+          return (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={styles.row}
+              onPress={() => navigation.navigate('Result', { result: item })}
+            >
+              <Text style={styles.rank}>{index + 1}</Text>
+              <Image source={{ uri: item.thumbnail }} style={styles.thumb} />
+              <View style={styles.rowInfo}>
+                <Text numberOfLines={1} style={styles.title}>{item.title}</Text>
+                <Text style={styles.count}>{item.count ? item.count.toLocaleString() : 0}회 판별</Text>
+                <View style={styles.tagRow}>
+                  {/* item.tags -> item.keywords로 수정 */}
+                  {(item.keywords || []).map((k) => (
+                    <Text key={k} style={styles.tag}>#{k}</Text>
+                  ))}
+                </View>
               </View>
-            </View>
-            <LabelBadge label={item.label} />
-          </View>
-        )}
+              <View style={styles.badgeWrap}>
+                <View style={[styles.verdictPill, { backgroundColor: accent + '22', borderColor: accent }]}>
+                  <Text style={[styles.verdictPillText, { color: accent }]}>{item.label}</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
       />
     </View>
   );
@@ -82,15 +94,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    // 일반 View이므로 패딩 설정이 정상 동작합니다.
     paddingTop: spacing.xl,
     paddingHorizontal: spacing.md,
   },
-  title: {
+  headertitle: {
     color: colors.textPrimary,
     fontSize: 24,
     fontWeight: '800',
     marginTop: spacing.md,
+  },
+  title: {
+    color: colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '500',
   },
   searchBox: {
     flexDirection: 'row',
@@ -128,7 +144,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   filterTextActive: {
-    color: colors.surface, // 활성화 시 텍스트 컬러
+    color: colors.surface,
     fontWeight: '700',
   },
   row: {
@@ -151,10 +167,7 @@ const styles = StyleSheet.create({
   rowInfo: {
     flex: 1,
     marginRight: spacing.sm,
-  },
-  url: {
-    color: colors.textPrimary,
-    fontWeight: '600',
+    justifyContent: 'center',
   },
   count: {
     color: colors.textSecondary,
@@ -173,5 +186,19 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 6,
     marginRight: spacing.xs,
+  },
+  badgeWrap: {
+    alignSelf: 'center',
+    justifyContent: 'center',
+  },
+  verdictPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+    borderWidth: 0.5,
+  },
+  verdictPillText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

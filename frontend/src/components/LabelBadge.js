@@ -2,31 +2,26 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, radius } from '../theme/colors';
 
-// label: 'AI' | 'Real'
 export default function LabelBadge({ label, style }) {
   const isAI = label === 'AI';
+  const accent = isAI ? colors.danger : colors.primary;
+
   return (
-    <View
-      style={[
-        styles.badge,
-        { backgroundColor: isAI ? colors.danger : colors.primary },
-        style,
-      ]}
-    >
-      <Text style={[styles.text, { color: isAI ? '#fff' : '#0A0A0F' }]}>{label}</Text>
+    <View style={[styles.pill, { backgroundColor: accent + '50', borderColor: accent }, style]}>
+      <Text style={[styles.text, { color: accent }]}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  badge: {
+  pill: {
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: radius.pill,
-    alignSelf: 'flex-start',
+    borderWidth: 0.5,
   },
   text: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '700',
   },
 });

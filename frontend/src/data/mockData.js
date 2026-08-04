@@ -1,6 +1,4 @@
-//  임시 하드코딩 데이터입니다.
-// 실제 AI 모델/백엔드 연동 시 이 파일의 값들을 API 응답으로 교체하세요.
-
+//임시 데이터
 export const mockUser = {
   username: '아이즈온',
   email: 'aizeon@email.com',
@@ -13,6 +11,17 @@ export const mockUser = {
   },
 };
 
+// aiScore에 따라 label과 description을 자동 생성해주는 공통 변환 함수
+export const getAiJudgement = (aiScore) => {
+  const isAi = aiScore >= 50;
+  return {
+    label: isAi ? 'AI' : 'Real',
+    description: isAi
+      ? '이 숏폼은 AI가 생성했을 확률이 높아요'
+      : '이 숏폼은 AI가 생성했을 확률이 낮아요',
+  };
+};
+
 export const mockRecentResults = [
   {
     id: 'r1',
@@ -20,12 +29,13 @@ export const mockRecentResults = [
     label: 'AI',
     aiScore: 98,
     url: 'instagram.com/reel/abc',
+    title: '가면을 쓴 딸기1',
+    keywords: ['딸기', '캐릭터'],
+    date: '2026.01.04',
     description: '이 숏폼은 AI가 생성했을 확률이 높아요',
-    evidence: [
-      { key: '움직임 패턴', score: 92 },
-      { key: '텍스처 분석', score: 88 },
-      { key: '메타 데이터', score: 79 },
-    ],
+    count: 2847,
+    saved: true,
+    
   },
   {
     id: 'r2',
@@ -33,12 +43,13 @@ export const mockRecentResults = [
     label: 'Real',
     aiScore: 11,
     url: 'instagram.com/reel/abc',
+    title: '남산타워 야경1',
+    keywords: ['남산타워', '서울', '풍경'],
+    date: '2026.02.06',
     description: '이 숏폼은 AI가 생성했을 확률이 낮아요',
-    evidence: [
-      { key: '움직임 패턴', score: 15 },
-      { key: '텍스처 분석', score: 9 },
-      { key: '메타 데이터', score: 12 },
-    ],
+    count: 1234,
+    saved: true,
+    
   },
   {
     id: 'r3',
@@ -46,26 +57,29 @@ export const mockRecentResults = [
     label: 'AI',
     aiScore: 85,
     url: 'instagram.com/reel/abc',
+    title: '고양이 소녀1',
+    keywords: ['여자', '고양이'],
+    date: '2026.03.02',
     description: '이 숏폼은 AI가 생성했을 확률이 높아요',
-    evidence: [
-      { key: '움직임 패턴', score: 80 },
-      { key: '텍스처 분석', score: 76 },
-      { key: '메타 데이터', score: 70 },
-    ],
+    count: 1963,
+    saved: false,
+    
   },
 ];
 
 export const mockAnalysisResult = {
-  url: 'instagram.com/reel/abc123xyz',
+  id: 'analysis-1',
   thumbnail: 'https://picsum.photos/seed/strawberry/300/400',
-  label: 'AI', // 'AI' | 'Real'
-  aiScore: 98,
+  label: 'AI',
+  aiScore: 97,
+  url: 'instagram.com/reel/abc123xyz',
+  title: '가면을 쓴 딸기2',
+  keywords: ['딸기', '캐릭터'],
+  date: '2026.04.04',
   description: '이 숏폼은 AI가 생성했을 확률이 높아요',
-  evidence: [
-    { key: '움직임 패턴', score: 90 },
-    { key: '텍스처 분석', score: 80 },
-    { key: '메타 데이터', score: 75 },
-  ],
+  count: 2847,
+  saved: true,
+ 
 };
 
 export const mockAnalysisSteps = [
@@ -77,81 +91,128 @@ export const mockAnalysisSteps = [
 export const mockRanking = [
   {
     id: 'rank1',
-    rank: 1,
     thumbnail: 'https://picsum.photos/seed/strawberry/300/400',
-    url: 'instagram.com/reel/abc123...',
-    count: 2847,
     label: 'AI',
-    tags: ['딸기', '캐릭터'],
+    aiScore: 95,
+    url: 'instagram.com/reel/abc123...',
+    title: '가면을 쓴 딸기3',
+    keywords: ['딸기', '캐릭터'],
+    date: '2026.05.04',
+    description: '이 숏폼은 AI가 생성했을 확률이 높아요',
+    count: 2847,
+    saved: true,
+    rank: 1,
   },
   {
     id: 'rank2',
-    rank: 2,
     thumbnail: 'https://picsum.photos/seed/catgirl/300/400',
-    url: 'tiktok.com/@creator/vid',
-    count: 1963,
     label: 'AI',
-    tags: ['여자', '고양이'],
+    aiScore: 85,
+    url: 'tiktok.com/@creator/vid',
+    title: '고양이 소녀2',
+    keywords: ['여자', '고양이'],
+    date: '2026.06.02',
+    description: '이 숏폼은 AI가 생성했을 확률이 높아요',
+    count: 1963,
+    saved: false,
+    rank: 2,
   },
   {
     id: 'rank3',
-    rank: 3,
     thumbnail: 'https://picsum.photos/seed/namsan/300/400',
-    url: 'instagram.com/reel/abc123...',
-    count: 1234,
     label: 'Real',
-    tags: ['남산타워', '서울', '풍경'],
+    aiScore: 11,
+    url: 'instagram.com/reel/abc123...',
+    title: '남산타워 야경2',
+    keywords: ['남산타워', '서울', '풍경'],
+    date: '2026.07.03',
+    description: '이 숏폼은 AI가 생성했을 확률이 낮아요',
+    count: 1234,
+    saved: true,
+    rank: 3,
   },
   {
     id: 'rank4',
-    rank: 4,
     thumbnail: 'https://picsum.photos/seed/monalisa1/300/400',
-    url: 'tiktok.com/@user2/vid',
-    count: 1023,
     label: 'AI',
-    tags: ['모나리자', '얼굴'],
+    aiScore: 92,
+    url: 'tiktok.com/@user2/vid',
+    title: '모나리자 AI 버전',
+    keywords: ['모나리자', '얼굴'],
+    date: '2026.08.28',
+    description: '이 숏폼은 AI가 생성했을 확률이 높아요',
+    count: 1023,
+    saved: false,
+    rank: 4,
   },
   {
     id: 'rank5',
-    rank: 5,
     thumbnail: 'https://picsum.photos/seed/monalisa2/300/400',
-    url: 'instagram.com/reel/abc123...',
-    count: 536,
     label: 'Real',
-    tags: ['모나리자', '얼굴'],
+    aiScore: 8,
+    url: 'instagram.com/reel/abc123...',
+    title: '모나리자 실사본',
+    keywords: ['모나리자', '얼굴'],
+    date: '2026.09.25',
+    description: '이 숏폼은 AI가 생성했을 확률이 낮아요',
+    count: 536,
+    saved: false,
+    rank: 5,
   },
 ];
 
 export const mockHistoryAI = Array.from({ length: 13 }).map((_, i) => ({
   id: `hist-ai-${i}`,
   thumbnail: 'https://picsum.photos/seed/strawberry/300/400',
-  aiScore: 98,
+  label: 'AI',
+  aiScore: 90,
   url: 'instagram.com/reel/abc',
-  date: '2026.06.25',
+  title: '가면을 쓴 딸기4',
+  keywords: ['딸기', '캐릭터'],
+  date: '2026.10.25',
+  description: '이 숏폼은 AI가 생성했을 확률이 높아요',
+  count: 2847,
   saved: i < 2,
 }));
 
 export const mockHistoryReal = Array.from({ length: 5 }).map((_, i) => ({
   id: `hist-real-${i}`,
   thumbnail: 'https://picsum.photos/seed/namsan/300/400',
+  label: 'Real',
   aiScore: 11,
   url: 'instagram.com/reel/abc',
-  date: '2026.06.25',
+  title: '남산타워 야경3',
+  keywords: ['남산타워', '서울', '풍경'],
+  date: '2026.11.25',
+  description: '이 숏폼은 AI가 생성했을 확률이 낮아요',
+  count: 1234,
   saved: true,
 }));
 
 export const mockSavedAI = Array.from({ length: 2 }).map((_, i) => ({
   id: `saved-ai-${i}`,
   thumbnail: 'https://picsum.photos/seed/strawberry/300/400',
-  aiScore: 98,
+  label: 'AI',
+  aiScore: 92,
   url: 'instagram.com/reel/abc',
-  date: '2026.06.25',
+  title: '가면을 쓴 딸기5',
+  keywords: ['딸기', '캐릭터'],
+  date: '2026.12.25',
+  description: '이 숏폼은 AI가 생성했을 확률이 높아요',
+  count: 2847,
+  saved: true,
 }));
 
 export const mockSavedReal = Array.from({ length: 5 }).map((_, i) => ({
   id: `saved-real-${i}`,
   thumbnail: 'https://picsum.photos/seed/namsan/300/400',
+  label: 'Real',
   aiScore: 11,
   url: 'instagram.com/reel/abc',
-  date: '2026.06.25',
+  title: '남산타워 야경4',
+  keywords: ['남산타워', '서울', '풍경'],
+  date: '2026.12.30',
+  description: '이 숏폼은 AI가 생성했을 확률이 낮아요',
+  count: 1234,
+  saved: true,
 }));

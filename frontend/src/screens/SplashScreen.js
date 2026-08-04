@@ -24,7 +24,7 @@ export default function SplashScreen({ navigation }) {
 
       <View style={styles.footer}>
         <PrimaryButton
-          title="시작하기"
+          title="회원가입"
           onPress={() => navigation.navigate('Signup')}
         />
         <PrimaryButton

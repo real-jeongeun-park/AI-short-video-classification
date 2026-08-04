@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: spacing.xl,
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '700' },
   seeAll: { color: colors.textSecondary, fontSize: 13 },

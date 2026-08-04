@@ -6,6 +6,10 @@ import { colors, spacing, radius, typography } from '../theme/colors';
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 
+// ⚠️ 디자인 모드: 백엔드 연결 전까지 true로 두고 더미 데이터로 화면 확인
+// 백엔드 연결 준비되면 false로 바꾸세요
+const DESIGN_MODE = true;
+
 const MENU = [
   { key: 'edit', label: '프로필 수정', icon: 'user' },
   { key: 'saved', label: '저장된 결과', icon: 'bookmark' },
@@ -34,6 +38,14 @@ export default function ProfileScreen({ navigation }) {
   const [detectCount, setDetectCount] = useState(0);
 
   useEffect(() => {
+    // ⚠️ 디자인 모드일 땐 SecureStore 안 읽고 더미 데이터 바로 채움
+    if (DESIGN_MODE) {
+      setUserId('1');
+      setNickname('아이즈온');
+      setEmail('test@example.com');
+      return;
+    }
+
     const loadUserInfo = async () => {
       const savedUserId = await SecureStore.getItemAsync("userId");
       const savedNickname = await SecureStore.getItemAsync("nickname");
@@ -57,6 +69,14 @@ export default function ProfileScreen({ navigation }) {
   };
 
   useEffect(() => {
+    // ⚠️ 디자인 모드일 땐 fetch 안 하고 더미 숫자 바로 채움
+    if (DESIGN_MODE) {
+      setDetectCount(42);
+      return;
+    }
+
+    if (!userId) return;
+
     const handleDetectCount = async () => {
       try {
         const response = await fetch(
@@ -69,23 +89,23 @@ export default function ProfileScreen({ navigation }) {
             body: JSON.stringify({ user_id: Number(userId) }),
           }
         );
-      
+
         const data = await response.json();
-        
-        if (!response.ok){
+
+        if (!response.ok) {
           alert(data.detail);
           return;
         }
 
-        setDetectCount(data.count);        
-      } catch (error){
+        setDetectCount(data.count);
+      } catch (error) {
         console.error("handleDetectCount error:", error);
       }
     };
 
     handleDetectCount();
   }, [userId]);
-  
+
   return (
     <View style={styles.container}>
       <View style={styles.avatarWrap}>
@@ -97,13 +117,11 @@ export default function ProfileScreen({ navigation }) {
       <Text style={styles.email}>{email}</Text>
 
       <View style={styles.statRow}>
-        {/* 좌측: 총 판정 수 */}
         <View style={styles.countCard}>
           <Text style={styles.countValue}>{detectCount}</Text>
           <Text style={styles.countLabel}>총 판정 수</Text>
         </View>
 
-        {/* 우측: 상위 n% 카드 */}
         <View style={styles.percentileCard}>
           <LinearGradient
             colors={[colors.gradientStart + '22', colors.danger + '22']}
