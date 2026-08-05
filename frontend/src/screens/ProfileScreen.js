@@ -133,7 +133,7 @@ export default function ProfileScreen({ navigation }) {
             <Feather name="award" size={23} color={colors.danger} />
           </View>
           <Text style={styles.percentileText}>
-            <Text style={styles.percentileUsername}>{nickname}</Text>
+            <Text style={styles.percentileNickname}>{nickname}</Text>
             <Text style={styles.percentileSub}> 님은</Text>
           </Text>
           <Text style={styles.percentileText}>
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     right: spacing.md,
   },
   percentileText: { fontSize: 15, lineHeight: 22 },
-  percentileUsername: { color: colors.textPrimary, fontWeight: '700' },
+  percentileNickname: { color: colors.textPrimary, fontWeight: '700' },
   percentileSub: { color: colors.textSecondary },
   percentileValue: { color: colors.primary, fontWeight: '800', fontSize: 17 },
 

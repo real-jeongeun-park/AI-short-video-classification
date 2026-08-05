@@ -1,6 +1,6 @@
 //임시 데이터
 export const mockUser = {
-  username: '아이즈온',
+  nickname: '아이즈온',
   email: 'aizeon@email.com',
   password: '12345678',
   avatarUrl: null,
