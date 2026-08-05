@@ -12,7 +12,7 @@ from app.schemas import (
 
 router = APIRouter()
 
-@router.post("/auth/signup")
+@router.post("/signup")
 def signup(data: SignupRequest, db: Session = Depends(get_db)):
     try:
         existing_user = db.query(User).filter(User.email == data.email).first()
@@ -50,21 +50,21 @@ def signup(data: SignupRequest, db: Session = Depends(get_db)):
 
     
 class LoginRequest(BaseModel):
-    email: str
+    nickname: str
     password: str
 
-@router.post("/auth/login")
+@router.post("/login")
 def login(data: LoginRequest, db: Session = Depends(get_db)):
     try:
         user = db.query(User).filter(
-            User.email == data.email,
+            User.nickname == data.nickname,
             User.password == data.password
         ).first()
 
         if not user:
             raise HTTPException(
                 status_code=401,
-                detail="아이디 또는 비밀번호가 올바르지 않습니다."
+                detail="닉네임 또는 비밀번호가 올바르지 않습니다."
             )
 
         return {
@@ -79,7 +79,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(ex))
 
 
-@router.post("/auth/logout")
+@router.post("/logout")
 def logout():
     try:
         return {

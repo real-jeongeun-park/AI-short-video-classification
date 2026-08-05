@@ -38,7 +38,7 @@ class SignupResult(BaseModel):
     created_at: str
 
 class LoginRequest(BaseModel):
-    email: str
+    nickname: str
     password: str
 
 class LoginResult(BaseModel):

@@ -15,7 +15,8 @@ export default function SignupScreen({ navigation }) {
   const [agreed, setAgreed] = useState(false);
 
   const handleSignup = async () => {
-    if (!username || !email || !password || !passwordConfirm) {
+
+    if (!nickname || !email || !password || !passwordConfirm) {
       Alert.alert("알림", "모든 칸을 입력해주세요.");
       return;
     }
@@ -23,12 +24,11 @@ export default function SignupScreen({ navigation }) {
       Alert.alert("알림", "이용약관에 동의해주세요.");
       return;
     }
- 
 
     try {
-      const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/auth/signup`, {
+      const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/v1/auth/signup`, {
         email: email,
-        nickname: username,       
+        nickname: nickname,       
         password: password,
         password_confirm: passwordConfirm
       });
@@ -39,13 +39,15 @@ export default function SignupScreen({ navigation }) {
       navigation.navigate('Login'); 
 
     } catch (error) {
+      console.log("에러 발생:", error);
       if (error.response) {
-        Alert.alert("회원가입 실패", error.response.data.detail);
+        Alert.alert("회원가입 실패", error.response.data.detail || "알 수 없는 오류");
       } else {
         Alert.alert("서버 오류", "서버와 연결할 수 없습니다. ngrok 주소를 확인해주세요.");
       }
     }
   };
+  
 
   return (
     <View style={styles.container}>

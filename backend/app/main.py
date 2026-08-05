@@ -33,6 +33,13 @@ app.add_middleware(
     allow_headers=["*"],   # 모든 요청 헤더 허용
 )
 
-app.include_router(auth_router)
-app.include_router(users_router)
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
+app.include_router(users_router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(model_router)
+
+@app.get("/")
+def root():
+    return {"message": "AI's On API is running!"}
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

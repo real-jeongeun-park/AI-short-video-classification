@@ -6,6 +6,10 @@ import { colors, spacing, radius, typography } from '../theme/colors';
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 
+
+// ⚠️ 디자인 모드: 백엔드 연결 전까지 true로 두고 더미 데이터로 화면 확인
+const DESIGN_MODE = false;
+
 const MENU = [
   { key: 'edit', label: '프로필 수정', icon: 'user' },
   { key: 'saved', label: '저장된 결과', icon: 'bookmark' },
@@ -49,20 +53,24 @@ export default function ProfileScreen({ navigation }) {
 
   const percentile = calculatePercentile(100);
 
-  const handleMenuPress = (key) => {
+  const handleMenuPress = async (key) => {
     if (key === 'edit') navigation.navigate('EditProfile');
     if (key === 'saved') navigation.navigate('SavedResults');
     if (key === 'logout') {
       try {
+        // 백엔드 로그아웃 API 호출 (선택)
+        await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/v1/auth/logout`, {
+          method: "POST",
+        });
+
         // 앱에 저장해둔 유저 세션 정보 삭제
         await SecureStore.deleteItemAsync("userId");
         await SecureStore.deleteItemAsync("nickname");
         await SecureStore.deleteItemAsync("email");
       } catch (error) {
-        console.error("로그아웃 정보 삭제 실패:", error);
+        console.error("로그아웃 처리 실패:", error);
       }
-      
-      // 기존 스플래시/로그인 화면으로 이동
+
       navigation.getParent()?.replace?.('Splash');
     }
     // 'about'은 임시로 동작 없음
