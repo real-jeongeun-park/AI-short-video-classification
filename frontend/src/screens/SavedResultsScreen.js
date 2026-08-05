@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, Image, StyleSheet, SafeAreaView, FlatList, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../theme/colors';
 import * as SecureStore from "expo-secure-store";
-import { FontAwesome } from '@expo/vector-icons';
-
-import { mockSavedAI, mockSavedReal } from '../data/mockData';
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
@@ -18,10 +16,16 @@ const formatDate = (dateString) => {
 export default function SavedResultsScreen({ navigation }) {
   const [userId, setUserId] = useState(null);
   const [tab, setTab] = useState('AI');
-  const [trueCount, setTrueCount] = useState(0); // AI Count
-  const [trueResults, setTrueResults] = useState([]); // AI Results
-  const [falseCount, setFalseCount] = useState(0); // Real Counnt
-  const [falseResults, setFalseResults] = useState([]) // Real Results
+  const [trueCount, setTrueCount] = useState(0);
+  const [trueResults, setTrueResults] = useState([]);
+  const [falseCount, setFalseCount] = useState(0);
+  const [falseResults, setFalseResults] = useState([]);
+
+  const [sort, setSort] = useState('최신순');
+  const [sortOpen, setSortOpen] = useState(false);
+
+  const SORTS = ['최신순', 'AI 생성 확률순'];
+  const accent = tab === 'AI' ? colors.danger : colors.primary;
 
   useEffect(() => {
     const loadUserInfo = async () => {
@@ -34,7 +38,7 @@ export default function SavedResultsScreen({ navigation }) {
 
   useEffect(() => {
     const handleSavedResults = async () => {
-      if (userId == 0){
+      if (!userId) {
         return;
       }
 
@@ -51,10 +55,10 @@ export default function SavedResultsScreen({ navigation }) {
             }),
           }
         );
-      
+
         const data = await response.json();
-        
-        if (!response.ok){
+
+        if (!response.ok) {
           alert(data.detail);
           return;
         }
@@ -64,7 +68,7 @@ export default function SavedResultsScreen({ navigation }) {
         setFalseCount(data.false_count);
         setFalseResults(data.false_results);
 
-      } catch (error){
+      } catch (error) {
         console.error("handleSavedResults error:", error);
       }
     };
@@ -84,7 +88,7 @@ export default function SavedResultsScreen({ navigation }) {
     }
 
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/users/bookmark/delete`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/users/bookmark/change`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -102,7 +106,6 @@ export default function SavedResultsScreen({ navigation }) {
     } catch (error) {
       console.error("handleDeleteBookmark error:", error);
 
-      // 실패 시 롤백: 다시 리스트에 추가
       if (tab === 'AI') {
         setTrueResults((prev) => [...prev, item]);
         setTrueCount((prev) => prev + 1);
@@ -114,7 +117,18 @@ export default function SavedResultsScreen({ navigation }) {
     }
   };
 
-  const accent = tab === 'AI' ? colors.danger : colors.primary;
+  const sortedResults = useMemo(() => {
+    const list = tab === 'AI' ? trueResults : falseResults;
+    const copied = [...list]; // 원본 배열 훼손 방지
+
+    if (sort === 'AI 생성 확률순') {
+      return tab === 'AI'
+        ? copied.sort((a, b) => b.ai_probability - a.ai_probability)
+        : copied.sort((a, b) => a.ai_probability - b.ai_probability);
+    }
+
+    return copied.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [trueResults, falseResults, tab, sort]);
 
   return (
     <View style={styles.container}>
@@ -145,10 +159,26 @@ export default function SavedResultsScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.sortWrap}>
+        <TouchableOpacity onPress={() => setSortOpen(!sortOpen)} style={styles.sortBtn}>
+          <Text style={styles.sortText}>{sort}</Text>
+          <Feather name="chevron-down" size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
+        {sortOpen && (
+          <View style={styles.sortMenu}>
+            {SORTS.map((s) => (
+              <TouchableOpacity key={s} onPress={() => { setSort(s); setSortOpen(false); }}>
+                <Text style={[styles.sortOption, s === sort && { color: tab == "AI" ? colors.danger : colors.primary }]}>{s}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+
       <FlatList
-        data={tab === 'AI' ? trueResults : falseResults}
-        keyExtractor={(item) => Number(item.log_id)}
-        contentContainerStyle={{ paddingTop: spacing.md, paddingBottom: spacing.xl }}
+        data={sortedResults}
+        keyExtractor={(item) => String(item.log_id)}
+        contentContainerStyle={{ paddingBottom: spacing.xl }}
         renderItem={({ item }) => (
           <TouchableOpacity
             activeOpacity={0.85}
@@ -166,7 +196,7 @@ export default function SavedResultsScreen({ navigation }) {
               </Text>
               <Text style={styles.caption}>
                 AI 생성확률 <Text style={[styles.scoreInline, { color: accent }]}>
-                  {(item.ai_probability * 100).toFixed(0)}%
+                  {(item.ai_probability * 100).toFixed(1)}%
                 </Text>
               </Text>
               <Text style={styles.date}>{formatDate(item.date)}</Text>
@@ -190,7 +220,7 @@ export default function SavedResultsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg,paddingTop: spacing.xl },
+  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg, paddingTop: spacing.xl },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '700' },
   tabRow: { flexDirection: 'row', backgroundColor: colors.surfaceAlt, borderRadius: radius.pill, padding: 4, marginTop: 50 },
@@ -203,9 +233,17 @@ const styles = StyleSheet.create({
   caption: { color: colors.textSecondary, fontSize: 12 },
   score: { fontSize: 22, fontWeight: '800', marginTop: 2 },
   url: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
-  date: { color: colors.textSecondary, fontSize: 11, marginTop: 3,},
-  bookmark_true: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.danger + '22', borderWidth: 0.5, borderColor: colors.danger},
-  bookmark_false: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary + '22', borderWidth: 0.5, borderColor: colors.primary},
+  date: { color: colors.textSecondary, fontSize: 11, marginTop: 3, },
+  bookmark_true: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.danger + '22', borderWidth: 0.5, borderColor: colors.danger },
+  bookmark_false: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary + '22', borderWidth: 0.5, borderColor: colors.primary },
   scoreInline: { fontSize: 15, fontWeight: 700 },
   itemTitle: { fontSize: 16, color: "white", fontWeight: 700, marginBottom: 5, },
+  sortWrap: { alignItems: 'flex-end', marginVertical: spacing.md },
+  sortBtn: { flexDirection: 'row', alignItems: 'center' },
+  sortText: { color: colors.textSecondary, marginRight: 4 },
+  sortMenu: {
+    position: 'absolute', top: 24, right: 0, backgroundColor: colors.surface,
+    borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, padding: spacing.sm, zIndex: 10,
+  },
+  sortOption: { color: colors.textSecondary, paddingVertical: 6, paddingHorizontal: spacing.sm },
 });

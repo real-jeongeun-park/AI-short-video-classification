@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
+import * as SecureStore from 'expo-secure-store';
 import { colors, typography, spacing, radius } from '../theme/colors';
 import LabelBadge from '../components/LabelBadge';
 
@@ -16,6 +18,18 @@ const formatDate = (dateString) => {
 export default function ResultScreen({ navigation, route }) {
   const result = route?.params?.result;
 
+  const [userId, setUserId] = useState(null);
+  const [isBookmarked, setIsBookmarked] = useState(result?.is_bookmarked ?? false);
+
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      const savedUserId = await SecureStore.getItemAsync("userId");
+      if (savedUserId) setUserId(savedUserId);
+    };
+
+    loadUserInfo();
+  }, []);
+
   if (!result) {
     return (
       <View style={styles.container}>
@@ -26,8 +40,40 @@ export default function ResultScreen({ navigation, route }) {
 
   const label = result.is_ai_generated;
   const accent = label ? colors.danger : colors.primary;
-  const aiScore = Math.round((result.ai_probability || 0) * 100);
+  const aiScore = (result.ai_probability * 100).toFixed(1);
   const keywords = result.keywords || [];
+
+  const handleBookmarkChange = async () => {
+    const newBookmarkState = !isBookmarked;
+
+    // 낙관적 업데이트: 화면 먼저 반영
+    setIsBookmarked(newBookmarkState);
+
+    try {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/users/bookmark/change`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          log_id: result.log_id,
+          user_id: Number(userId),
+          is_bookmarked: newBookmarkState,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail);
+      }
+
+    } catch (error) {
+      console.error("handleBookmarkChange error:", error);
+
+      // 실패 시 롤백
+      setIsBookmarked(!newBookmarkState);
+      alert("북마크 변경에 실패했습니다.");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -59,7 +105,7 @@ export default function ResultScreen({ navigation, route }) {
           <Text style={styles.caption}>AI 생성 확률</Text>
           <Text style={[styles.scoreText, { color: accent }]}>{aiScore}%</Text>
           <Text style={styles.description}>
-            {label ? '이 숏폼은 AI가\n생성했을확률이 높아요.' : '이 숏폼은 AI가\n생성했을 확률이 낮아요.'}
+            {label ? '이 숏폼은 AI가\n생성했을 확률이 높아요.' : '이 숏폼은 AI가\n생성했을 확률이 낮아요.'}
           </Text>
         </View>
       </View>
@@ -99,14 +145,22 @@ export default function ResultScreen({ navigation, route }) {
       </View>
 
       <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.saveBtn}>
-          <Feather name="bookmark" size={16} color={accent} />
-          <Text style={[styles.saveBtnText, { color: accent }]}>결과 저장</Text>
+        <TouchableOpacity style={styles.saveBtn} onPress={handleBookmarkChange}>
+          <FontAwesome
+            name={isBookmarked ? 'bookmark' : 'bookmark-o'}
+            size={16}
+            color={accent}
+          />
+          <Text style={[styles.saveBtnText, { color: accent }]}>
+            {isBookmarked ? '저장됨' : '결과 저장'}
+          </Text>
         </TouchableOpacity>
+
         <TouchableOpacity style={[styles.shareBtn, { backgroundColor: accent }]}>
           <Text style={styles.shareBtnText}>공유하기</Text>
         </TouchableOpacity>
       </View>
+
     </View>
   );
 }

@@ -13,25 +13,12 @@ const MENU = [
   { key: 'logout', label: '로그아웃', icon: 'log-out' },
 ];
 
-// 총 판정 수 기반 상위 퍼센트 계산 (임시 로직 - 추후 서버 값으로 교체)
-function calculatePercentile(totalJudgements) {
-  const tiers = [
-    { min: 100, percentile: 5 },
-    { min: 50, percentile: 10 },
-    { min: 30, percentile: 20 },
-    { min: 15, percentile: 35 },
-    { min: 5, percentile: 60 },
-    { min: 0, percentile: 90 },
-  ];
-  const matched = tiers.find((t) => totalJudgements >= t.min);
-  return matched ? matched.percentile : 90;
-}
-
 export default function ProfileScreen({ navigation }) {
   const [userId, setUserId] = useState(null);
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [detectCount, setDetectCount] = useState(0);
+  const [percentile, setPercentile] = useState(0.0);
 
   useEffect(() => {
     const loadUserInfo = async () => {
@@ -46,8 +33,6 @@ export default function ProfileScreen({ navigation }) {
 
     loadUserInfo();
   }, []);
-
-  const percentile = calculatePercentile(100);
 
   const handleMenuPress = (key) => {
     if (key === 'edit') navigation.navigate('EditProfile');
@@ -81,6 +66,7 @@ export default function ProfileScreen({ navigation }) {
         }
 
         setDetectCount(data.count);
+        setPercentile(data.top_percent)
       } catch (error) {
         console.error("handleDetectCount error:", error);
       }
@@ -120,7 +106,7 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.percentileSub}> 님은</Text>
           </Text>
           <Text style={styles.percentileText}>
-            <Text style={styles.percentileValue}>상위 {percentile}%</Text>
+            <Text style={styles.percentileValue}>상위 {percentile.toFixed(1)}%</Text>
             <Text style={styles.percentileSub}> 사용자입니다</Text>
           </Text>
         </View>

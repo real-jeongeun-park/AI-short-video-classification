@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.database import get_db
 from app.models import DetectionLog
@@ -27,24 +28,6 @@ class PasswordRequest(BaseModel):
 class BookmarkRequest(BaseModel):
     log_id: int
     is_bookmarked: bool
-
-
-@router.post("/users/detect-count")
-def login(data: DefaultRequest, db: Session = Depends(get_db)):
-    try:
-        count = db.query(DetectionLog).filter(
-            DetectionLog.user_id == data.user_id
-        ).count()
-
-        return {
-            "count": count,
-        }
-    
-    except HTTPException:
-        raise
-    except Exception as ex:
-        raise HTTPException(status_code=500, detail=str(ex))
-    
 
 @router.patch("/users/nickname")
 def update_nickname(data: NicknameRequest, db: Session = Depends(get_db)):
@@ -119,6 +102,7 @@ def saved_results(data: DefaultRequest, db: Session = Depends(get_db)):
                 DetectionLog.user_id == data.user_id,
                 DetectionLog.is_bookmarked == True,
             )
+            .order_by(DetectionLog.detected_at.desc())
             .all()
         )
 
@@ -130,9 +114,11 @@ def saved_results(data: DefaultRequest, db: Session = Depends(get_db)):
                 "log_id": log.id,
                 "video_id": video.id,
                 "ai_probability": log.ai_probability,
+                "is_ai_generated": log.is_ai_generated,
                 "title": video.title,
+                "url": video.url,
                 "date": log.detected_at,
-                "is_boomarked": log.is_bookmarked,
+                "is_bookmarked": log.is_bookmarked,
             }
 
             if log.is_ai_generated:
@@ -153,7 +139,7 @@ def saved_results(data: DefaultRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(ex))
 
 
-@router.patch("/users/bookmark/delete")
+@router.patch("/users/bookmark/change")
 def delete_bookmark(data: BookmarkRequest, db: Session = Depends(get_db)):
     try:
         row = db.query(DetectionLog).filter(
@@ -195,6 +181,43 @@ def get_detection_results(db: Session = Depends(get_db)):
         ]
 
         return {"results": results}
+
+    except HTTPException:
+        raise
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=str(ex))
+    
+
+@router.post("/users/detect-count")
+def get_percentile(data: DefaultRequest, db: Session = Depends(get_db)):
+    try:
+        # 유저별 판정 건수 집계
+        counts = (
+            db.query(
+                DetectionLog.user_id,
+                func.count(DetectionLog.id).label("count")
+            )
+            .group_by(DetectionLog.user_id)
+            .all()
+        )
+
+        if not counts:
+            return {"detect_count": 0, "percentile": 100}
+
+        my_count = next((c.count for c in counts if c.user_id == data.user_id), 0)
+        total_users = len(counts)
+
+        # 나보다 판정 수가 적은 사람 수
+        lower_count = sum(1 for c in counts if c.count < my_count)
+
+        # 백분위 계산
+        percentile_rank = (lower_count / total_users) * 100
+        top_percent = round(100 - percentile_rank, 1)
+
+        return {
+            "count": my_count,
+            "top_percent": top_percent,
+        }
 
     except HTTPException:
         raise
