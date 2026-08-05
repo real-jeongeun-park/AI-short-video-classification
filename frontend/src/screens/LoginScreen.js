@@ -15,7 +15,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import * as SecureStore from 'expo-secure-store';
 
 export default function LoginScreen({ navigation }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
@@ -26,7 +26,7 @@ export default function LoginScreen({ navigation }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username,
+          email,
           password,
         }),
       });
@@ -65,13 +65,13 @@ export default function LoginScreen({ navigation }) {
         </Text>
 
         {/* 닉네임/아이디 입력창 */}
-        <Text style={styles.label}>닉네임</Text>
+        <Text style={styles.label}>이메일</Text>
         <TextInput
           style={styles.input}
-          placeholder="닉네임을 입력하세요"
+          placeholder="이메일을 입력하세요"
           placeholderTextColor={colors.textPlaceholder}
-          value={username}
-          onChangeText={setUsername}
+          value={email}
+          onChangeText={setEmail}
           autoCapitalize="none"
         />
 

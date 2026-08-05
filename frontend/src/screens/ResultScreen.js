@@ -3,12 +3,30 @@ import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity } from 'r
 import { Feather } from '@expo/vector-icons';
 import { colors, typography, spacing, radius } from '../theme/colors';
 import LabelBadge from '../components/LabelBadge';
-import { mockAnalysisResult } from '../data/mockData';
+
+const formatDate = (dateString) => {
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+};
 
 export default function ResultScreen({ navigation, route }) {
-  const result = route?.params?.result || mockAnalysisResult;
-  const isAI = result.label === 'AI';
-  const accent = isAI ? colors.danger : colors.primary;
+  const result = route?.params?.result;
+
+  if (!result) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ color: colors.textPrimary }}>결과 정보를 불러올 수 없습니다.</Text>
+      </View>
+    );
+  }
+
+  const label = result.is_ai_generated;
+  const accent = label ? colors.danger : colors.primary;
+  const aiScore = Math.round((result.ai_probability || 0) * 100);
   const keywords = result.keywords || [];
 
   return (
@@ -23,20 +41,25 @@ export default function ResultScreen({ navigation, route }) {
 
       <View style={styles.urlBox}>
         <Feather name="link" size={16} color={colors.textSecondary} />
-        <Text style={styles.urlText}>{result.url}</Text>
+        <Text style={styles.urlText} numberOfLines={1}>{result.url}</Text>
       </View>
 
       <View style={styles.resultCard}>
         <View>
-          <Image source={{ uri: result.thumbnail }} style={styles.thumb} />
-          <LabelBadge label={result.label} style={styles.badge} />
+          {result.thumbnail ? (
+            <Image source={{ uri: result.thumbnail }} style={styles.thumb} />
+          ) : (
+            <View style={[styles.thumb, styles.thumbPlaceholder]}>
+              <Feather name="video" size={24} color={colors.textPlaceholder} />
+            </View>
+          )}
+          <LabelBadge label={label} style={styles.badge} />
         </View>
         <View style={styles.resultInfo}>
           <Text style={styles.caption}>AI 생성 확률</Text>
-          <Text style={[styles.scoreText, { color: accent }]}>{result.aiScore}%</Text>
+          <Text style={[styles.scoreText, { color: accent }]}>{aiScore}%</Text>
           <Text style={styles.description}>
-            {result.description ||
-              (isAI ? '이 숏폼은 AI가 생성했을\n확률이 높아요' : '이 숏폼은 AI가 생성했을\n확률이 낮아요')}
+            {label ? '이 숏폼은 AI가\n생성했을확률이 높아요.' : '이 숏폼은 AI가\n생성했을 확률이 낮아요.'}
           </Text>
         </View>
       </View>
@@ -45,13 +68,13 @@ export default function ResultScreen({ navigation, route }) {
         <View style={[styles.infoRow, styles.infoRowBorder]}>
           <Text style={styles.infoLabel}>판정 결과</Text>
           <View style={[styles.verdictPill, { backgroundColor: accent + '22', borderColor: accent }]}>
-            <Text style={[styles.verdictPillText, { color: accent }]}>{result.label}</Text>
+            <Text style={[styles.verdictPillText, { color: accent }]}>{label ? "AI" : "Real"}</Text>
           </View>
         </View>
 
         <View style={[styles.infoRow, styles.infoRowBorder]}>
           <Text style={styles.infoLabel}>Title</Text>
-          <Text style={styles.infoValue}>{result.title || '-'}</Text>
+          <Text style={styles.infoValue} numberOfLines={1}>{result.title || '-'}</Text>
         </View>
 
         <View style={[styles.infoRow, styles.infoRowBorder]}>
@@ -71,7 +94,7 @@ export default function ResultScreen({ navigation, route }) {
 
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>분석일</Text>
-          <Text style={styles.infoValue}>{result.date || '-'}</Text>
+          <Text style={styles.infoValue}>{formatDate(result.date)}</Text>
         </View>
       </View>
 
@@ -102,7 +125,7 @@ const styles = StyleSheet.create({
     height: 52,
     marginTop: 30,
   },
-  urlText: { color: colors.textSecondary, marginLeft: spacing.sm },
+  urlText: { color: colors.textSecondary, marginLeft: spacing.sm, flex: 1 },
   resultCard: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
@@ -111,11 +134,16 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   thumb: { width: 100, height: 130, borderRadius: radius.md },
+  thumbPlaceholder: {
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   badge: { position: 'absolute', top: 7, left: 7 },
-  resultInfo: { flex: 1, marginLeft: spacing.md, justifyContent: 'center',alignItems: 'center' },
+  resultInfo: { flex: 1, marginLeft: spacing.md, justifyContent: 'center', alignItems: 'center' },
   caption: { fontSize: 15, color: colors.textPrimary },
   scoreText: { fontSize: 34, fontWeight: '800', marginTop: 4 },
-  description: { fontSize: 16, color: colors.textSecondary, marginTop: spacing.sm , textAlign: 'center'},
+  description: { fontSize: 16, color: colors.textSecondary, marginTop: spacing.sm, textAlign: 'center' },
 
   infoCard: {
     backgroundColor: colors.surface,
@@ -144,12 +172,14 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontWeight: '600',
     textAlign: 'right',
+    flex: 1,
+    marginLeft: spacing.md,
   },
   verdictPill: {
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: radius.pill,
-    borderWidth: 0.5
+    borderWidth: 0.5,
   },
   verdictPillText: {
     fontSize: 13,

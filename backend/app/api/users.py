@@ -24,6 +24,11 @@ class PasswordRequest(BaseModel):
     user_id: int
     password: str
 
+class BookmarkRequest(BaseModel):
+    log_id: int
+    is_bookmarked: bool
+
+
 @router.post("/users/detect-count")
 def login(data: DefaultRequest, db: Session = Depends(get_db)):
     try:
@@ -102,17 +107,17 @@ def update_password(data: PasswordRequest, db: Session = Depends(get_db)):
     except Exception as ex:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(ex))
-    
 
 
 @router.post("/users/saved-results")
-def see_saved_results(data: DefaultRequest, db: Session = Depends(get_db)):
+def saved_results(data: DefaultRequest, db: Session = Depends(get_db)):
     try:
         rows = (
             db.query(DetectionLog, Video)
             .join(Video, DetectionLog.video_id == Video.id)
             .filter(
                 DetectionLog.user_id == data.user_id,
+                DetectionLog.is_bookmarked == True,
             )
             .all()
         )
@@ -122,10 +127,12 @@ def see_saved_results(data: DefaultRequest, db: Session = Depends(get_db)):
 
         for log, video in rows:
             item = {
+                "log_id": log.id,
                 "video_id": video.id,
                 "ai_probability": log.ai_probability,
-                "url": video.url,
+                "title": video.title,
                 "date": log.detected_at,
+                "is_boomarked": log.is_bookmarked,
             }
 
             if log.is_ai_generated:
@@ -139,6 +146,55 @@ def see_saved_results(data: DefaultRequest, db: Session = Depends(get_db)):
             "false_count": len(false_results),
             "false_results": false_results,
         }
+
+    except HTTPException:
+        raise
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=str(ex))
+
+
+@router.patch("/users/bookmark/delete")
+def delete_bookmark(data: BookmarkRequest, db: Session = Depends(get_db)):
+    try:
+        row = db.query(DetectionLog).filter(
+            DetectionLog.id == data.log_id
+        ).first()
+
+        row.is_bookmarked = data.is_bookmarked
+        db.commit()
+        db.refresh(row)
+
+    except HTTPException:
+        raise
+    except Exception as ex:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(ex))
+
+
+@router.get("/users/detection-results")
+def get_detection_results(db: Session = Depends(get_db)):
+    try:
+        rows = (
+            db.query(DetectionLog, Video)
+            .join(Video, DetectionLog.video_id == Video.id)
+            .order_by(DetectionLog.detected_at.desc())
+            .limit(5) 
+            .all()
+        )
+
+        results = [
+            {
+                "log_id": log.id,
+                "video_id": video.id,
+                "ai_probability": log.ai_probability,
+                "is_ai_generated": log.is_ai_generated,
+                "title": video.title,
+                "date": log.detected_at,
+            }
+            for log, video in rows
+        ]
+
+        return {"results": results}
 
     except HTTPException:
         raise

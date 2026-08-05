@@ -10,14 +10,18 @@ from contextlib import asynccontextmanager
 
 from app.api.auth import router as auth_router
 from app.api.users import router as users_router
+from app.api.model import router as model_router
+
+from app.model.classifier import load_model
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """서버 시작 시 테이블 자동 생성"""
     Base.metadata.create_all(bind=engine)
+    """모델 준비"""
+    load_model()
     yield
 
 app = FastAPI(title="AI's On API", lifespan=lifespan)
@@ -31,10 +35,4 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(users_router)
-
-@app.get("/")
-def root():
-    return {"message": "AI's On API is running!"}
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+app.include_router(model_router)

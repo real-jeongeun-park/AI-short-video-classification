@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,17 +8,54 @@ import {
   FlatList,
   TouchableOpacity,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { colors, typography, spacing, radius } from '../theme/colors';
 import RecentResultCard from '../components/RecentResultCard';
-import { mockRecentResults } from '../data/mockData';
 
 export default function HomeScreen({ navigation }) {
+  const [userId, setUserId] = useState(null);
   const [link, setLink] = useState('');
+  const [recentResults, setRecentResults] = useState([]);
+
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      const savedUserId = await SecureStore.getItemAsync("userId");
+      if (savedUserId) setUserId(savedUserId);
+    };
+
+    loadUserInfo();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchRecentResults = async () => {
+        try {
+          const response = await fetch(
+            `${process.env.EXPO_PUBLIC_API_URL}/users/detection-results`,
+            { method: "GET" }
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            console.error("fetchRecentResults error:", data.detail);
+            return;
+          }
+
+          setRecentResults(data.results);
+
+        } catch (error) {
+          console.error("fetchRecentResults error:", error);
+        }
+      };
+
+      fetchRecentResults();
+    }, [])
+  );
 
   const handleAnalyze = () => {
-    // TODO: 실제 모델/백엔드 연동 전, 하드코딩된 URL로 이동
-    navigation.navigate('Analyzing', { url: link || 'instagram.com/reel/abc123xyz' });
+    navigation.navigate('Analyzing', { url: link });
   };
 
   return (
@@ -43,15 +80,12 @@ export default function HomeScreen({ navigation }) {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>최근 판정 결과</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('History')}>
-            <Text style={styles.seeAll}>전체보기</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
       <FlatList
-        data={mockRecentResults}
-        keyExtractor={(item) => item.id}
+        data={recentResults}
+        keyExtractor={(item) => String(item.log_id)}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: spacing.lg }}

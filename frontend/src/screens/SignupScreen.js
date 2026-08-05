@@ -24,12 +24,12 @@ export default function SignupScreen({ navigation }) {
         </TouchableOpacity>
 
         <Text style={[typography.h1, { color: colors.textPrimary }]}>회원가입</Text>
-        <Text style={styles.subtitle}>AI 숏폼 콘텐츠 판별을 시작해보세요</Text>
+        <Text style={styles.subtitle}>AI 숏폼 콘텐츠 판별을 시작해보세요.</Text>
 
         <Text style={styles.label}>닉네임</Text>
         <TextInput
           style={[styles.input, styles.inputFocused]}
-          placeholder="나의 닉네임"
+          placeholder="닉네임을 입력하세요."
           placeholderTextColor={colors.textPlaceholder}
           value={username}
           onChangeText={setUsername}
@@ -38,7 +38,7 @@ export default function SignupScreen({ navigation }) {
         <Text style={styles.label}>이메일</Text>
         <TextInput
           style={styles.input}
-          placeholder="example@email.com"
+          placeholder="이메일을 입력하세요."
           placeholderTextColor={colors.textPlaceholder}
           value={email}
           onChangeText={setEmail}
@@ -48,7 +48,7 @@ export default function SignupScreen({ navigation }) {
         <Text style={styles.label}>비밀번호</Text>
         <TextInput
           style={styles.input}
-          placeholder="8자 이상 입력"
+          placeholder="8자 이상 입력하세요."
           placeholderTextColor={colors.textPlaceholder}
           value={password}
           onChangeText={setPassword}
@@ -58,7 +58,7 @@ export default function SignupScreen({ navigation }) {
         <Text style={styles.label}>비밀번호 확인</Text>
         <TextInput
           style={styles.input}
-          placeholder="비밀번호를 다시 입력"
+          placeholder="비밀번호를 다시 입력하세요."
           placeholderTextColor={colors.textPlaceholder}
           value={passwordConfirm}
           onChangeText={setPasswordConfirm}

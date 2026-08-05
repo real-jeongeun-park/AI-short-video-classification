@@ -2,20 +2,77 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as Progress from 'react-native-progress';
+import * as SecureStore from 'expo-secure-store';
 import { colors, typography, spacing, radius } from '../theme/colors';
-import { mockAnalysisResult } from '../data/mockData';
 
 export default function AnalyzingScreen({ navigation, route }) {
-  const url = route?.params?.url || 'instagram.com/reel/abc123xyz';
-  const [progress, setProgress] = useState(0.65);
+  const url = route?.params?.url
+  
+  const [userId, setUserId] = useState(null);
+  const [progress, setProgress] = useState(0.1);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
-    // TODO: 실제 분석 API 연동 시 polling/websocket 등으로 진행률을 갱신하세요.
-    const timer = setTimeout(() => {
-      navigation.replace('Result', { result: { ...mockAnalysisResult, url } });
-    }, 1800);
-    return () => clearTimeout(timer);
+      const loadUserInfo = async () => {
+        const savedUserId = await SecureStore.getItemAsync("userId");
+        if (savedUserId) setUserId(savedUserId);
+      };
+  
+      loadUserInfo();
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    let progressInterval;
+
+    if (!userId){
+      return;
+    }
+
+    const analyze = async () => {
+      try {
+        // 실제 진행률을 알 수 없으니, 백엔드 응답 오기 전까지 가짜로 서서히 채워줌
+        progressInterval = setInterval(() => {
+          setProgress((prev) => (prev < 0.9 ? prev + 0.05 : prev));
+        }, 500);
+
+
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/model/detect/analyze`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            url: url,
+            user_id: Number(userId),
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!isMounted) return;
+
+        clearInterval(progressInterval);
+
+        if (!response.ok) {
+          setErrorMsg(data.detail || "분석에 실패했습니다.");
+          return;
+        }
+
+        setProgress(1);
+        navigation.replace('Result', { result: data });
+
+      } catch (error) {
+        console.error("analyze error:", error);
+        if (isMounted) setErrorMsg("분석 중 오류가 발생했습니다.");
+      }
+    };
+
+    analyze();
+
+    return () => {
+      isMounted = false;
+      clearInterval(progressInterval);
+    };
+  }, [userId]);
 
   return (
     <View style={styles.container}>
@@ -32,28 +89,38 @@ export default function AnalyzingScreen({ navigation, route }) {
         <Text style={styles.urlText}>{url}</Text>
       </View>
 
-      <View style={styles.center}>
-        <Progress.Circle
-          size={140}
-          progress={progress}
-          color={colors.danger}
-          unfilledColor={colors.surfaceAlt}
-          borderWidth={0}
-          thickness={8}
-          showsText={false}
-        />
-        <Text style={styles.statusTitle}>AI 패턴 분석 중...</Text>
-        <Text style={styles.statusSub}>영상 프레임을 심층 분석하고 있어요</Text>
-
-        <View style={styles.progressBarWrap}>
-          <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
+      {errorMsg ? (
+        <View style={styles.center}>
+          <Text style={[styles.statusTitle, { color: colors.danger }]}>분석 실패</Text>
+          <Text style={styles.statusSub}>{errorMsg}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={() => navigation.goBack()}>
+            <Text style={styles.retryBtnText}>돌아가기</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      ) : (
+        <View style={styles.center}>
+          <Progress.Circle
+            size={140}
+            progress={progress}
+            color={colors.danger}
+            unfilledColor={colors.surfaceAlt}
+            borderWidth={0}
+            thickness={8}
+            showsText={false}
+          />
+          <Text style={styles.statusTitle}>AI 패턴 분석 중...</Text>
+          <Text style={styles.statusSub}>영상 프레임을 심층 분석하고 있어요</Text>
+
+          <View style={styles.progressBarWrap}>
+            <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
+          </View>
+        </View>
+      )}
 
       <View style={styles.stepList}>
-        <StepRow label="영상 다운로드 완료" done />
-        <StepRow label="데이터 분석" done />
-        <StepRow label="AI 패턴 분석 중..." done={false} />
+        <StepRow label="영상 다운로드 완료" done={progress > 0.3} />
+        <StepRow label="데이터 분석" done={progress > 0.6} />
+        <StepRow label="AI 패턴 분석 중..." done={progress >= 1} />
       </View>
     </View>
   );
@@ -75,7 +142,7 @@ function StepRow({ label, done }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg,paddingTop: spacing.xl },
+  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg, paddingTop: spacing.xl },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '700' },
   urlBox: {
@@ -107,4 +174,12 @@ const styles = StyleSheet.create({
     width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: colors.border,
   },
   stepLabel: { marginLeft: spacing.sm, fontSize: 15 },
+  retryBtn: {
+    marginTop: spacing.lg,
+    backgroundColor: colors.surfaceAlt,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+  },
+  retryBtnText: { color: colors.textPrimary, fontWeight: '600' },
 });

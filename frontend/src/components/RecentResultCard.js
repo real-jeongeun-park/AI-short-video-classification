@@ -3,14 +3,22 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors, radius, spacing } from '../theme/colors';
 import LabelBadge from './LabelBadge';
 
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+}
+
 export default function RecentResultCard({ item, onPress }) {
-  const accent = item.label === 'AI' ? colors.danger : colors.primary;
+  const accent = item.is_ai_generated ? colors.danger : colors.primary;
 
   return (
     <TouchableOpacity activeOpacity={0.85} onPress={onPress} style={styles.card}>
       <View style={styles.imageWrap}>
         <Image source={{ uri: item.thumbnail }} style={styles.image} />
-        <LabelBadge label={item.label} style={styles.badge} />
+        <LabelBadge label={item.is_ai_generated} style={styles.badge} />
       </View>
 
       <View style={styles.info}>
@@ -18,9 +26,9 @@ export default function RecentResultCard({ item, onPress }) {
           {item.title}
         </Text>
         <Text style={styles.caption}>
-          AI 생성확률 <Text style={[styles.scoreInline, { color: accent }]}>{item.aiScore}%</Text>
+          AI 생성확률 <Text style={[styles.scoreInline, { color: accent }]}>{(item.ai_probability * 100).toFixed(1)}%</Text>
         </Text>
-        <Text style={styles.date}>{item.date}</Text>
+          <Text style={styles.date}>{formatDate(item.date)}</Text>
       </View>
     </TouchableOpacity>
   );

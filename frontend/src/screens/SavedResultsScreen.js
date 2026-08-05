@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet, SafeAreaView, FlatList, TouchableOpacity
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../theme/colors';
 import * as SecureStore from "expo-secure-store";
+import { FontAwesome } from '@expo/vector-icons';
 
 import { mockSavedAI, mockSavedReal } from '../data/mockData';
 
@@ -33,6 +34,10 @@ export default function SavedResultsScreen({ navigation }) {
 
   useEffect(() => {
     const handleSavedResults = async () => {
+      if (userId == 0){
+        return;
+      }
+
       try {
         const response = await fetch(
           `${process.env.EXPO_PUBLIC_API_URL}/users/saved-results`,
@@ -67,19 +72,49 @@ export default function SavedResultsScreen({ navigation }) {
     handleSavedResults();
   }, [userId, tab]);
 
-  const accent = tab === 'AI' ? colors.danger : colors.primary;
+  const handleDeleteBookmark = async (item) => {
+    const removeFromList = (list) => list.filter((r) => r.log_id !== item.log_id);
 
-  const data = useMemo(() => {
-    const list = [...rawData];
-    if (sort === 'AI 생성 확률순') {
-      // AI 탭: 내림차순 / Real 탭: 오름차순
-      return tab === 'AI'
-        ? list.sort((a, b) => b.aiScore - a.aiScore)
-        : list.sort((a, b) => a.aiScore - b.aiScore);
+    if (tab === 'AI') {
+      setTrueResults((prev) => removeFromList(prev));
+      setTrueCount((prev) => prev - 1);
+    } else {
+      setFalseResults((prev) => removeFromList(prev));
+      setFalseCount((prev) => prev - 1);
     }
-    // 최신순: date 문자열 기준 내림차순 (예: '2026.06.25')
-    return list.sort((a, b) => (a.date < b.date ? 1 : -1));
-  }, [rawData, sort, tab]);
+
+    try {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/users/bookmark/delete`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          log_id: item.log_id,
+          is_bookmarked: false,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail);
+      }
+
+    } catch (error) {
+      console.error("handleDeleteBookmark error:", error);
+
+      // 실패 시 롤백: 다시 리스트에 추가
+      if (tab === 'AI') {
+        setTrueResults((prev) => [...prev, item]);
+        setTrueCount((prev) => prev + 1);
+      } else {
+        setFalseResults((prev) => [...prev, item]);
+        setFalseCount((prev) => prev + 1);
+      }
+      alert("북마크 해제에 실패했습니다.");
+    }
+  };
+
+  const accent = tab === 'AI' ? colors.danger : colors.primary;
 
   return (
     <View style={styles.container}>
@@ -93,13 +128,7 @@ export default function SavedResultsScreen({ navigation }) {
 
       <View style={styles.tabRow}>
         <TouchableOpacity
-          style={[
-            styles.tab,
-            tab === 'AI' && {
-              backgroundColor: colors.danger + '22',
-              borderColor: colors.danger,
-            },
-          ]}
+          style={[styles.tab, tab === 'AI' && { backgroundColor: colors.danger }]}
           onPress={() => setTab('AI')}
         >
           <Text style={[styles.tabText, tab === 'AI' && styles.tabTextActive]}>
@@ -107,13 +136,7 @@ export default function SavedResultsScreen({ navigation }) {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[
-            styles.tab,
-            tab === 'Real' && {
-              backgroundColor: colors.primary + '22',
-              borderColor: colors.primary,
-            },
-          ]}
+          style={[styles.tab, tab === 'Real' && { backgroundColor: colors.primary }]}
           onPress={() => setTab('Real')}
         >
           <Text style={[styles.tabText, tab === 'Real' && { color: '#0A0A0F' }]}>
@@ -122,25 +145,9 @@ export default function SavedResultsScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.sortWrap}>
-        <TouchableOpacity onPress={() => setSortOpen(!sortOpen)} style={styles.sortBtn}>
-          <Text style={styles.sortText}>{sort}</Text>
-          <Feather name="chevron-down" size={16} color={colors.textSecondary} />
-        </TouchableOpacity>
-        {sortOpen && (
-          <View style={styles.sortMenu}>
-            {SORTS.map((s) => (
-              <TouchableOpacity key={s} onPress={() => { setSort(s); setSortOpen(false); }}>
-                <Text style={[styles.sortOption, s === sort && { color: colors.primary }]}>{s}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </View>
-
       <FlatList
         data={tab === 'AI' ? trueResults : falseResults}
-        keyExtractor={(item) => String(item.video_id)}
+        keyExtractor={(item) => Number(item.log_id)}
         contentContainerStyle={{ paddingTop: spacing.md, paddingBottom: spacing.xl }}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -148,16 +155,33 @@ export default function SavedResultsScreen({ navigation }) {
             style={styles.card}
             onPress={() => navigation.navigate('Result', { result: item })}
           >
-            <Image source={{ uri: item.thumbnail }} style={styles.thumb} />
+            {item.thumbnail ? (
+              <Image source={{ uri: item.thumbnail }} style={styles.thumb} />
+            ) : (
+              <View style={[styles.thumb, styles.thumbPlaceholder]} />
+            )}
             <View style={styles.info}>
-              <Text style={styles.caption}>AI 생성 확률</Text>
-              <Text style={[styles.score, { color: accent }]}>{(item.ai_probability * 100).toFixed(1)}%</Text>
-              <Text style={styles.url}>{item.url}</Text>
+              <Text style={styles.itemTitle} numberOfLines={1}>
+                {item.title}
+              </Text>
+              <Text style={styles.caption}>
+                AI 생성확률 <Text style={[styles.scoreInline, { color: accent }]}>
+                  {(item.ai_probability * 100).toFixed(0)}%
+                </Text>
+              </Text>
               <Text style={styles.date}>{formatDate(item.date)}</Text>
             </View>
-            <View style={[styles.bookmark, { backgroundColor: accent + '22', borderWidth: 0.5, borderColor: accent }]}>
-              <Feather name="bookmark" size={16} color={accent} />
-            </View>
+            <TouchableOpacity
+              style={tab === 'AI' ? styles.bookmark_true : styles.bookmark_false}
+              onPress={() => handleDeleteBookmark(item)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <FontAwesome
+                name="bookmark"
+                size={16}
+                color={accent}
+              />
+            </TouchableOpacity>
           </TouchableOpacity>
         )}
       />
@@ -166,33 +190,22 @@ export default function SavedResultsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg, paddingTop: spacing.xl },
+  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg,paddingTop: spacing.xl },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '700' },
   tabRow: { flexDirection: 'row', backgroundColor: colors.surfaceAlt, borderRadius: radius.pill, padding: 4, marginTop: 50 },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    borderWidth: 0.5,
-    borderColor: 'transparent',
-  },
-  tabText: { color: colors.textSecondary, fontWeight: '700' },
-  sortWrap: { alignItems: 'flex-end', marginTop: spacing.md, marginBottom: spacing.md },
-  sortBtn: { flexDirection: 'row', alignItems: 'center' },
-  sortText: { color: colors.textSecondary, marginRight: 4 },
-  sortMenu: {
-    position: 'absolute', top: 24, right: 0, backgroundColor: colors.surface,
-    borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, padding: spacing.sm, zIndex: 10,
-  },
-  sortOption: { color: colors.textSecondary, paddingVertical: 6, paddingHorizontal: spacing.sm },
+  tab: { flex: 1, paddingVertical: 10, borderRadius: radius.pill, alignItems: 'center', },
+  tabText: { color: colors.textSecondary, fontWeight: '700', },
+  tabTextActive: { color: '#fff' },
   card: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md, alignItems: 'center' },
-  thumb: { width: 84, height: 84, borderRadius: radius.md },
-  info: { flex: 1, marginLeft: spacing.md, justifyContent: 'center' },
-  itemTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '700' },
-  caption: { color: colors.textSecondary, fontSize: 13, marginTop: 10 },
-  scoreInline: { fontSize: 13, fontWeight: '600' },
-  date: { color: colors.textSecondary, fontSize: 12, marginTop: spacing.xs },
-   bookmark: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  thumb: { width: 64, height: 64, borderRadius: radius.sm },
+  info: { flex: 1, marginLeft: spacing.md },
+  caption: { color: colors.textSecondary, fontSize: 12 },
+  score: { fontSize: 22, fontWeight: '800', marginTop: 2 },
+  url: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
+  date: { color: colors.textSecondary, fontSize: 11, marginTop: 3,},
+  bookmark_true: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.danger + '22', borderWidth: 0.5, borderColor: colors.danger},
+  bookmark_false: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary + '22', borderWidth: 0.5, borderColor: colors.primary},
+  scoreInline: { fontSize: 15, fontWeight: 700 },
+  itemTitle: { fontSize: 16, color: "white", fontWeight: 700, marginBottom: 5, },
 });
