@@ -52,7 +52,19 @@ export default function ProfileScreen({ navigation }) {
   const handleMenuPress = (key) => {
     if (key === 'edit') navigation.navigate('EditProfile');
     if (key === 'saved') navigation.navigate('SavedResults');
-    if (key === 'logout') navigation.getParent()?.replace?.('Splash');
+    if (key === 'logout') {
+      try {
+        // 앱에 저장해둔 유저 세션 정보 삭제
+        await SecureStore.deleteItemAsync("userId");
+        await SecureStore.deleteItemAsync("nickname");
+        await SecureStore.deleteItemAsync("email");
+      } catch (error) {
+        console.error("로그아웃 정보 삭제 실패:", error);
+      }
+      
+      // 기존 스플래시/로그인 화면으로 이동
+      navigation.getParent()?.replace?.('Splash');
+    }
     // 'about'은 임시로 동작 없음
   };
 

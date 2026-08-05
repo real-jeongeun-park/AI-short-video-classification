@@ -14,6 +14,9 @@ import { colors, typography, spacing, radius } from '../theme/colors';
 import PrimaryButton from '../components/PrimaryButton';
 import * as SecureStore from 'expo-secure-store';
 
+import axios from 'axios';
+import { Alert } from 'react-native';
+
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
