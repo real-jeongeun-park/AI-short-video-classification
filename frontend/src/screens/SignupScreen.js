@@ -5,7 +5,7 @@ import { colors, typography, spacing, radius } from '../theme/colors';
 import PrimaryButton from '../components/PrimaryButton';
 
 export default function SignupScreen({ navigation }) {
-  const [username, setUsername] = useState('');
+  const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -31,8 +31,8 @@ export default function SignupScreen({ navigation }) {
           style={[styles.input, styles.inputFocused]}
           placeholder="닉네임을 입력하세요."
           placeholderTextColor={colors.textPlaceholder}
-          value={username}
-          onChangeText={setUsername}
+          value={nickname}
+          onChangeText={setNickname}
         />
 
         <Text style={styles.label}>이메일</Text>
