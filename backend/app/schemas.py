@@ -73,43 +73,48 @@ class SaveResultRequest(BaseModel):
 class SaveResultResponse(BaseModel):
     is_saved: bool
 
-# [수정] 랭킹 아이템 스키마
+# 인기 판별 랭킹 조회
 class RankingItem(BaseModel):
     rank: int
     log_id: int
     title: str
+    url: str               
+    date: Optional[str] = None
     thumbnail_url: str
     analysis_count: int
     result_type: str
     ai_probability: float
     keywords: List[str]
 
-# [수정] 랭킹 조회 응답 스키마
-class RankingResponse(BaseModel):
+class RankingResult(BaseModel):
     rankings: List[RankingItem]
     total_count: int
 
-# [수정] 기록 목록 요약 스키마
+class RankingResponse(BaseResponse):
+    result: RankingResult
+
+# 내가 분석한 기록 목록 조회
 class HistorySummary(BaseModel):
     ai_count: int
     real_count: int
     total_count: int
 
-# [수정] 기록 목록 아이템 스키마
 class HistoryItem(BaseModel):
     log_id: int
-    video_id: int
     title: str
+    url: str
     thumbnail_url: str
     result_type: str
     ai_probability: float
     is_saved: bool
-    created_at: str
+    created_at: datetime
 
-# [수정] 기록 목록 조회 응답 스키마
-class HistoryResponse(BaseModel):
+class HistoryResult(BaseModel):
     summary: HistorySummary
     history: List[HistoryItem]
+
+class HistoryResponse(BaseResponse):
+    result: HistoryResult
 
 # [수정] 저장된 결과 요약 스키마
 class SavedSummary(BaseModel):

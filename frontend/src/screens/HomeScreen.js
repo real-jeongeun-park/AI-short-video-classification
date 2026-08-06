@@ -51,7 +51,7 @@ export default function HomeScreen({ navigation }) {
       };
 
       fetchRecentResults();
-    }, [])
+    }, [userId])
   );
 
   const handleAnalyze = () => {
