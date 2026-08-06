@@ -18,7 +18,7 @@ import axios from 'axios';
 import { Alert } from 'react-native';
 
 export default function LoginScreen({ navigation }) {
-  const [nickname, setNickname] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
@@ -29,7 +29,7 @@ export default function LoginScreen({ navigation }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          nickname,
+          email,
           password,
         }),
       });
@@ -42,6 +42,7 @@ export default function LoginScreen({ navigation }) {
 
       await SecureStore.setItemAsync("userId", String(data.user_id));
       await SecureStore.setItemAsync("nickname", String(data.nickname));
+      await SecureStore.setItemAsync("email", String(data.email));
 
       navigation.replace('Main');
     } catch (error) {
@@ -66,14 +67,13 @@ export default function LoginScreen({ navigation }) {
           아이즈온에 오신 걸 환영합니다.
         </Text>
 
-        {/* 닉네임/아이디 입력창 */}
-        <Text style={styles.label}>닉네임</Text>
+        <Text style={styles.label}>이메일</Text>
         <TextInput
           style={styles.input}
-          placeholder="닉네임을 입력하세요"
+          placeholder="이메일을 입력하세요."
           placeholderTextColor={colors.textPlaceholder}
-          value={nickname}
-          onChangeText={setNickname}
+          value={email}
+          onChangeText={setEmail}
           autoCapitalize="none"
         />
 
@@ -81,7 +81,7 @@ export default function LoginScreen({ navigation }) {
         <Text style={styles.label}>비밀번호</Text>
         <TextInput
           style={styles.input}
-          placeholder="비밀번호를 입력하세요"
+          placeholder="비밀번호를 입력하세요."
           placeholderTextColor={colors.textPlaceholder}
           value={password}
           onChangeText={setPassword}

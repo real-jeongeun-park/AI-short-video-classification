@@ -50,13 +50,12 @@ export default function ResultScreen({ navigation, route }) {
     setIsBookmarked(newBookmarkState);
 
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/users/bookmark/change`, {
-        method: "PATCH",
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/bookmarks`, {
+        method: isBookmarked ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          log_id: result.log_id,
+          detection_id: result.log_id,
           user_id: Number(userId),
-          is_bookmarked: newBookmarkState,
         }),
       });
 
@@ -69,7 +68,6 @@ export default function ResultScreen({ navigation, route }) {
     } catch (error) {
       console.error("handleBookmarkChange error:", error);
 
-      // 실패 시 롤백
       setIsBookmarked(!newBookmarkState);
       alert("북마크 변경에 실패했습니다.");
     }
@@ -152,7 +150,7 @@ export default function ResultScreen({ navigation, route }) {
             color={accent}
           />
           <Text style={[styles.saveBtnText, { color: accent }]}>
-            {isBookmarked ? '저장됨' : '결과 저장'}
+            {isBookmarked ? '저장됨' : '북마크 저장'}
           </Text>
         </TouchableOpacity>
 

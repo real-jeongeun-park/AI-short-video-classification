@@ -77,6 +77,10 @@ export default function SavedResultsScreen({ navigation }) {
   }, [userId, tab]);
 
   const handleDeleteBookmark = async (item) => {
+    if (!userId) {
+      return;
+    }
+
     const removeFromList = (list) => list.filter((r) => r.log_id !== item.log_id);
 
     if (tab === 'AI') {
@@ -88,12 +92,12 @@ export default function SavedResultsScreen({ navigation }) {
     }
 
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/users/bookmark/change`, {
-        method: "PATCH",
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/bookmarks`, {
+        method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          log_id: item.log_id,
-          is_bookmarked: false,
+          detection_id: item.log_id,
+          user_id: userId,
         }),
       });
 

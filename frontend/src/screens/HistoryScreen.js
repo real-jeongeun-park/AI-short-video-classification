@@ -14,44 +14,42 @@ export default function HistoryScreen({ navigation }) {
   const [data, setData] = useState([]);
   const [summary, setSummary] = useState({ ai_count: 0, real_count: 0 });
 
-  const [nickname, setNickname] = useState(null);
+  const [userId, setUserId] = useState(null);
 
   const accent = tab === 'AI' ? colors.danger : colors.primary;
 
   useEffect(() => {
-    const loadNickname = async () => {
-      try {
-        const storedNickname = await SecureStore.getItemAsync('nickname');
-        if (storedNickname) {
-          setNickname(storedNickname);
-        } else {
-          console.log("저장된 닉네임이 없습니다. 로그인이 필요합니다.");
-          // 필요하다면 여기서 navigation.replace('Login') 등으로 보낼 수 있습니다.
-        }
-      } catch (error) {
-        console.error("닉네임 불러오기 실패:", error);
-      }
+    const loadUserInfo = async () => {
+      const savedUserId = await SecureStore.getItemAsync("userId");
+      if (savedUserId) setUserId(savedUserId);
     };
 
-    loadNickname();
+    loadUserInfo();
   }, []);
 
   useEffect(() => {
     const fetchHistory = async () => {
-      if (!nickname) return;
+      if (!userId) return;
+
+      const apiType = tab === 'AI' ? 'AI' : 'REAL';
+      const apiSort = sort === '최신순' ? 'LATEST' : 'PROBABILITY';
 
       try {
-        const apiType = tab === 'AI' ? 'AI' : 'REAL';
-        const apiSort = sort === '최신순' ? 'LATEST' : 'PROBABILITY';
-
-        const url = `https://grope-onboard-lure.ngrok-free.dev/api/v1/users/history?nickname=${nickname}&type=${apiType}&sort=${apiSort}`;
-        
-        const response = await fetch(url);
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/v1/users/history`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: Number(userId),
+            api_type: apiType,
+            api_sort: apiSort,
+          }),
+        });
+                
         const json = await response.json();
         
         if (json.isSuccess) {
           setData(json.result.history);
-          setSummary(json.result.summary); // 서버에서 준 개수 정보 업데이트
+          setSummary(json.result.summary);
         }
       } catch (error) {
         console.error("히스토리 데이터 불러오기 실패:", error);
@@ -59,7 +57,7 @@ export default function HistoryScreen({ navigation }) {
     };
 
     fetchHistory();
-  }, [tab, sort, nickname]);
+  }, [tab, sort, userId]);
 
   return (
     <View style={styles.container}>

@@ -1,9 +1,8 @@
 from sqlalchemy import (
-    Column, Integer, String, Text,
-    DateTime, Float, Boolean, ForeignKey, func
+    Column, Integer, String, Text, Float, Boolean, DateTime,
+    ForeignKey, UniqueConstraint, func
 )
 from sqlalchemy.orm import relationship
-
 from app.database import Base
 
 
@@ -13,13 +12,13 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    nickname = Column(String(50), nullable=False, unique=True)
-    email = Column(String(255), nullable=False, unique=True, index=True)
-    password = Column(String(255), nullable=False)  # 해시된 비밀번호 저장
+    nickname = Column(String(50), unique=True, nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password = Column(String(255), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # 이 유저가 판독한 기록들
     detection_logs = relationship("DetectionLog", back_populates="user")
+    bookmarks = relationship("Bookmark", back_populates="user")
 
 
 class Video(Base):
@@ -30,12 +29,11 @@ class Video(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     url = Column(Text, nullable=False)
-    keyword = Column(String(255), nullable=True)   # 콤마 구분 등 자유롭게 활용
+    keyword = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # 이 영상에 대한 판독 기록들
     detection_logs = relationship("DetectionLog", back_populates="video")
-
+    
 
 class DetectionLog(Base):
     """영상 AI 판독 기록 테이블"""
@@ -45,10 +43,29 @@ class DetectionLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     video_id = Column(Integer, ForeignKey("videos.id"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    ai_probability = Column(Float, nullable=False)   # AI 생성 확률 0.0 ~ 1.0
-    is_ai_generated = Column(Boolean, nullable=False) # AI 영상 여부 (True/False)
+    ai_probability = Column(Float, nullable=False)
+    is_ai_generated = Column(Boolean, nullable=False)
     detected_at = Column(DateTime(timezone=True), server_default=func.now())
-    is_bookmarked = Column(Boolean, nullable=False, default=False)
+    # is_bookmarked 컬럼 제거 -> bookmarks 테이블로 분리
 
     video = relationship("Video", back_populates="detection_logs")
     user = relationship("User", back_populates="detection_logs")
+    bookmark = relationship("Bookmark", back_populates="detection_log", uselist=False)
+
+
+class Bookmark(Base):
+    """북마크 테이블"""
+
+    __tablename__ = "bookmarks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    detection_id = Column(Integer, ForeignKey("detection_logs.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    detection_log = relationship("DetectionLog", back_populates="bookmark")
+    user = relationship("User", back_populates="bookmarks")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "detection_id", name="uq_user_detection_bookmark"),
+    )

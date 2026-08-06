@@ -11,6 +11,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { colors, typography, spacing, radius } from '../theme/colors';
+import * as SecureStore from 'expo-secure-store';
 import RecentResultCard from '../components/RecentResultCard';
 
 export default function HomeScreen({ navigation }) {
@@ -29,12 +30,19 @@ export default function HomeScreen({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
+      if (!userId) return;
+
       const fetchRecentResults = async () => {
         try {
-          const response = await fetch(
-            `${process.env.EXPO_PUBLIC_API_URL}/users/detection-results`,
-            { method: "GET" }
-          );
+          const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/home/recent-results`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              user_id: Number(userId),
+            })
+          });
 
           const data = await response.json();
 

@@ -50,14 +50,14 @@ def signup(data: SignupRequest, db: Session = Depends(get_db)):
 
     
 class LoginRequest(BaseModel):
-    nickname: str
+    email: str
     password: str
 
 @router.post("/login")
 def login(data: LoginRequest, db: Session = Depends(get_db)):
     try:
         user = db.query(User).filter(
-            User.nickname == data.nickname,
+            User.email == data.email,
             User.password == data.password
         ).first()
 

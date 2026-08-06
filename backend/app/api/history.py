@@ -1,25 +1,25 @@
 from fastapi import APIRouter, Query, Depends
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, asc
 import logging
 
 from app.database import get_db
-from app.models import User, Video, DetectionLog 
-from app.schemas import HistoryResponse
+from app.models import User, Video, DetectionLog, Bookmark
 
 router = APIRouter()
 
-@router.get("/api/v1/users/history", response_model=HistoryResponse)
-def get_my_analysis_history(
-    nickname: str = Query(..., description="조회할 유저 닉네임"),
-    type: str = Query("AI", description="탭 종류: AI | REAL"),
-    sort: str = Query("LATEST", description="정렬: LATEST | PROBABILITY"),
-    db: Session = Depends(get_db) # ✅ DB 연결 활성화
-):
+class HistoryRequest(BaseModel):
+    user_id: int
+    api_type: str
+    api_sort: str
+
+@router.post("/history")
+def get_history(data: HistoryRequest, db: Session = Depends(get_db)):
     try:
         # 1. 닉네임으로 유저 찾기
-        user = db.query(User).filter(User.nickname == nickname).first()
+        user = db.query(User).filter(User.id == data.user_id).first()
         if not user:
             return JSONResponse(
                 status_code=404,
@@ -33,7 +33,7 @@ def get_my_analysis_history(
 
         # 2. 유저의 전체 분석 기록 통계(summary) 구하기
         total_logs = db.query(DetectionLog).filter(DetectionLog.user_id == user.id).all()
-        
+
         if not total_logs:
             return JSONResponse(
                 status_code=404,
@@ -56,25 +56,29 @@ def get_my_analysis_history(
             Video.title,
             DetectionLog.is_ai_generated,
             DetectionLog.ai_probability,
-            DetectionLog.is_bookmarked,
-            DetectionLog.detected_at
+            DetectionLog.detected_at,
+            Bookmark.id.label("bookmark_id"),
         ).join(Video, DetectionLog.video_id == Video.id)\
+         .outerjoin(
+             Bookmark,
+             (Bookmark.detection_id == DetectionLog.id) & (Bookmark.user_id == user.id)
+         )\
          .filter(DetectionLog.user_id == user.id)
 
         # 탭(type) 필터링 적용
-        if type == "AI":
+        if data.api_sort == "AI":
             query = query.filter(DetectionLog.is_ai_generated == True)
-        elif type == "REAL":
+        elif data.api_sort == "REAL":
             query = query.filter(DetectionLog.is_ai_generated == False)
 
         # 정렬(sort) 조건 적용
-        if sort == "LATEST":
+        if data.api_sort == "LATEST":
             query = query.order_by(desc(DetectionLog.detected_at))
-        elif sort == "PROBABILITY":
-            if type == "AI":
-                query = query.order_by(desc(DetectionLog.ai_probability)) # AI 탭: 확률 높은 순
-            elif type == "REAL":
-                query = query.order_by(asc(DetectionLog.ai_probability))  # REAL 탭: 확률 낮은 순
+        elif data.api_sort == "PROBABILITY":
+            if data.api_sort == "AI":
+                query = query.order_by(desc(DetectionLog.ai_probability))
+            elif data.api_sort == "REAL":
+                query = query.order_by(asc(DetectionLog.ai_probability))
 
         # 최종 데이터 추출
         logs = query.all()
@@ -85,10 +89,10 @@ def get_my_analysis_history(
             history_list.append({
                 "log_id": log.log_id,
                 "title": log.title,
-                "thumbnail_url": "https://dummy-image-url.com/thumb.jpg", # DB에 썸네일 컬럼이 없어서 임시 처리
+                "thumbnail_url": "https://dummy-image-url.com/thumb.jpg",
                 "result_type": "AI" if log.is_ai_generated else "REAL",
                 "ai_probability": round(log.ai_probability * 100, 1),
-                "is_saved": log.is_bookmarked,
+                "is_saved": log.bookmark_id is not None,   
                 "created_at": log.detected_at.strftime("%Y-%m-%dT%H:%M:%SZ") if log.detected_at else None
             })
 

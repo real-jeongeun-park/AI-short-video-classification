@@ -3,20 +3,21 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import Optional
+from pydantic import BaseModel, Field
 
 from app.database import get_db
 from app.models import Video, DetectionLog 
-from app.schemas import RankingResponse
+
 router = APIRouter()
 
-@router.get("/api/v1/rankings", response_model=RankingResponse)
-def get_popular_rankings(
-    filter: str = Query("ALL", description="필터: ALL | AI | REAL"),
-    keyword: Optional[str] = Query(None, description="검색 키워드"),
-    page: int = Query(1, description="페이지 번호", ge=1),
-    limit: int = Query(10, description="조회 개수", ge=1),
-    db: Session = Depends(get_db)
-):
+class RankingRequest(BaseModel):
+    filter: str = Field(default="ALL")
+    keyword: Optional[str] = Field(default=None)
+    page: int = Field(default=1, ge=1)
+    limit: int = Field(default=10, ge=1)
+
+@router.post("/")
+def get_popular_rankings(data: RankingRequest, db: Session = Depends(get_db)):
     # 1. 필터 값 검증 (400 에러 처리)
     valid_filters = ["ALL", "AI", "REAL"]
     if filter not in valid_filters:
@@ -44,30 +45,30 @@ def get_popular_rankings(
     ).join(Video, DetectionLog.video_id == Video.id)
 
     # 3. 필터 조건 적용 (is_ai_generated: True/False)
-    if filter == "AI":
+    if data.filter == "AI":
         query = query.filter(DetectionLog.is_ai_generated == True)
-    elif filter == "REAL":
+    elif data.filter == "REAL":
         query = query.filter(DetectionLog.is_ai_generated == False)
 
     # 4. 검색 키워드 조건 적용
-    if keyword:
+    if data.keyword:
         query = query.filter(
-            (Video.title.ilike(f"%{keyword}%")) | (Video.keyword.ilike(f"%{keyword}%"))
+            (Video.title.ilike(f"%{data.keyword}%")) | (Video.keyword.ilike(f"%{data.keyword}%"))
         )
     # 5. 전체 데이터 개수 구하기
     total_count = query.count()
 
     # 6. 정렬(분석 많은 순) 및 페이징 처리
     logs = (query.order_by(desc("analysis_count"))
-                 .offset((page - 1) * limit)
-                 .limit(limit)
+                 .offset((data.page - 1) * data.limit)
+                 .limit(data.limit)
                  .all())
 
     # 7. 조회된 데이터를 명세서 형식에 맞게 가공
     rankings_list = []
     for index, log in enumerate(logs):
         rankings_list.append({
-            "rank": ((page - 1) * limit) + (index + 1),
+            "rank": ((data.page - 1) * data.limit) + (index + 1),
             "log_id": log.log_id,
             "title": log.title,
             "url": log.url,                    

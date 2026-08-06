@@ -19,20 +19,31 @@ export default function RankingScreen({ navigation }) {
   const [keyword, setKeyword] = useState('');
 
   const [data, setData] = useState([]);
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      const savedUserId = await SecureStore.getItemAsync("userId");
+      if (savedUserId) setUserId(savedUserId);
+    };
+
+    loadUserInfo();
+  }, []);
 
   useEffect(() => {
     const fetchRankings = async () => {
       try {
         const apiFilter = filter === '전체' ? 'ALL' : filter.toUpperCase();
         
-        let url = `https://grope-onboard-lure.ngrok-free.dev/api/v1/rankings?filter=${apiFilter}`;
-        
-        // 검색어가 있을 때만 keyword 파라미터 추가
-        if (keyword.trim() !== '') {
-          url += `&keyword=${encodeURIComponent(keyword)}`;
-        }
-        
-        const response = await fetch(url);
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/v1/ranking`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filter: apiFilter,
+            keyword: keyword.trim(),
+          }),
+        });
+
         const json = await response.json();
         
         if (json.isSuccess) {
