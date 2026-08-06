@@ -14,37 +14,39 @@ import { colors, typography, spacing, radius } from '../theme/colors';
 import PrimaryButton from '../components/PrimaryButton';
 import * as SecureStore from 'expo-secure-store';
 
+import axios from 'axios';
+import { Alert } from 'react-native';
+
 export default function LoginScreen({ navigation }) {
-  const [email, setEmail] = useState('');
+  const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/auth/login`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/v1/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email,
+          nickname,
           password,
         }),
       });
 
       const data = await response.json();
       if (!response.ok) {
-        alert(data.detail || "로그인에 실패했습니다.");
+        Alert.alert("로그인 실패", data.detail || "로그인에 실패했습니다.");
         return;
       }
 
       await SecureStore.setItemAsync("userId", String(data.user_id));
       await SecureStore.setItemAsync("nickname", String(data.nickname));
-      await SecureStore.setItemAsync("email", String(data.email));
 
       navigation.replace('Main');
     } catch (error) {
       console.error(error);
-      alert("로그인 중 오류가 발생했습니다.");
+      Alert.alert("오류", "로그인 중 오류가 발생했습니다.");
     }
   };
 
@@ -70,8 +72,8 @@ export default function LoginScreen({ navigation }) {
           style={styles.input}
           placeholder="이메일을 입력하세요"
           placeholderTextColor={colors.textPlaceholder}
-          value={email}
-          onChangeText={setEmail}
+          value={nickname}
+          onChangeText={setNickname}
           autoCapitalize="none"
         />
 

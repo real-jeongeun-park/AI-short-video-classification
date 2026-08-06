@@ -4,6 +4,9 @@ import { Feather } from '@expo/vector-icons';
 import { colors, typography, spacing, radius } from '../theme/colors';
 import PrimaryButton from '../components/PrimaryButton';
 
+import axios from 'axios';
+import { Alert } from 'react-native';
+
 export default function SignupScreen({ navigation }) {
   const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
@@ -11,10 +14,40 @@ export default function SignupScreen({ navigation }) {
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [agreed, setAgreed] = useState(false);
 
-  const handleSignup = () => {
-    // 하드코딩: 실제 검증/API 연동 전, 바로 메인으로 이동
-    navigation.replace('Main');
+  const handleSignup = async () => {
+
+    if (!nickname || !email || !password || !passwordConfirm) {
+      Alert.alert("알림", "모든 칸을 입력해주세요.");
+      return;
+    }
+    if (!agreed) {
+      Alert.alert("알림", "이용약관에 동의해주세요.");
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/api/v1/auth/signup`, {
+        email: email,
+        nickname: nickname,       
+        password: password,
+        password_confirm: passwordConfirm
+      });
+
+      console.log("회원가입 성공:", response.data);
+      Alert.alert("가입 성공!", "회원가입이 완료되었습니다. 로그인해주세요.");
+      
+      navigation.navigate('Login'); 
+
+    } catch (error) {
+      console.log("에러 발생:", error);
+      if (error.response) {
+        Alert.alert("회원가입 실패", error.response.data.detail || "알 수 없는 오류");
+      } else {
+        Alert.alert("서버 오류", "서버와 연결할 수 없습니다. ngrok 주소를 확인해주세요.");
+      }
+    }
   };
+  
 
   return (
     <View style={styles.container}>
