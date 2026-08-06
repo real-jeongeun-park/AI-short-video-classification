@@ -67,10 +67,10 @@ export default function LoginScreen({ navigation }) {
         </Text>
 
         {/* 닉네임/아이디 입력창 */}
-        <Text style={styles.label}>이메일</Text>
+        <Text style={styles.label}>닉네임</Text>
         <TextInput
           style={styles.input}
-          placeholder="이메일을 입력하세요"
+          placeholder="닉네임을 입력하세요"
           placeholderTextColor={colors.textPlaceholder}
           value={nickname}
           onChangeText={setNickname}

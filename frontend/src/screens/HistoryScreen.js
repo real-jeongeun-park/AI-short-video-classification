@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, SafeAreaView, FlatList, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../theme/colors';
-import { mockHistoryAI, mockHistoryReal } from '../data/mockData';
+import * as SecureStore from 'expo-secure-store';
 
 const SORTS = ['최신순', 'AI 생성 확률순'];
 
@@ -11,20 +11,55 @@ export default function HistoryScreen({ navigation }) {
   const [sort, setSort] = useState('최신순');
   const [sortOpen, setSortOpen] = useState(false);
 
-  const rawData = tab === 'AI' ? mockHistoryAI : mockHistoryReal;
+  const [data, setData] = useState([]);
+  const [summary, setSummary] = useState({ ai_count: 0, real_count: 0 });
+
+  const [nickname, setNickname] = useState(null);
+
   const accent = tab === 'AI' ? colors.danger : colors.primary;
 
-  const data = useMemo(() => {
-    const list = [...rawData];
-    if (sort === 'AI 생성 확률순') {
-      // AI 탭: 내림차순 / Real 탭: 오름차순
-      return tab === 'AI'
-        ? list.sort((a, b) => b.aiScore - a.aiScore)
-        : list.sort((a, b) => a.aiScore - b.aiScore);
-    }
-    // 최신순: date 문자열 기준 내림차순
-    return list.sort((a, b) => (a.date < b.date ? 1 : -1));
-  }, [rawData, sort, tab]);
+  useEffect(() => {
+    const loadNickname = async () => {
+      try {
+        const storedNickname = await SecureStore.getItemAsync('nickname');
+        if (storedNickname) {
+          setNickname(storedNickname);
+        } else {
+          console.log("저장된 닉네임이 없습니다. 로그인이 필요합니다.");
+          // 필요하다면 여기서 navigation.replace('Login') 등으로 보낼 수 있습니다.
+        }
+      } catch (error) {
+        console.error("닉네임 불러오기 실패:", error);
+      }
+    };
+
+    loadNickname();
+  }, []);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!nickname) return;
+
+      try {
+        const apiType = tab === 'AI' ? 'AI' : 'REAL';
+        const apiSort = sort === '최신순' ? 'LATEST' : 'PROBABILITY';
+
+        const url = `https://grope-onboard-lure.ngrok-free.dev/api/v1/users/history?nickname=${nickname}&type=${apiType}&sort=${apiSort}`;
+        
+        const response = await fetch(url);
+        const json = await response.json();
+        
+        if (json.isSuccess) {
+          setData(json.result.history);
+          setSummary(json.result.summary); // 서버에서 준 개수 정보 업데이트
+        }
+      } catch (error) {
+        console.error("히스토리 데이터 불러오기 실패:", error);
+      }
+    };
+
+    fetchHistory();
+  }, [tab, sort, nickname]);
 
   return (
     <View style={styles.container}>
@@ -42,7 +77,7 @@ export default function HistoryScreen({ navigation }) {
           onPress={() => setTab('AI')}
         >
           <Text style={[styles.tabText, tab === 'AI' && { color: colors.danger, fontWeight: '700' }]}>
-            AI 생성 {mockHistoryAI.length}
+            AI 생성 {summary.ai_count}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -56,7 +91,7 @@ export default function HistoryScreen({ navigation }) {
           onPress={() => setTab('Real')}
         >
           <Text style={[styles.tabText, tab === 'Real' && { color: colors.primary, fontWeight: '700' }]}>
-            Real 콘텐츠 {mockHistoryReal.length}
+            Real 콘텐츠 {summary.real_count}
           </Text>
         </TouchableOpacity>
       </View>
@@ -79,7 +114,7 @@ export default function HistoryScreen({ navigation }) {
 
       <FlatList
         data={data}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.log_id.toString()}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -87,23 +122,23 @@ export default function HistoryScreen({ navigation }) {
             style={styles.card}
             onPress={() => navigation.navigate('Result', { result: item })}
           >
-            <Image source={{ uri: item.thumbnail }} style={styles.thumb} />
+            <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} />
             <View style={styles.info}>
               <Text numberOfLines={1} style={styles.itemTitle}>{item.title}</Text>
               <Text style={styles.caption}>
-                AI 생성확률 <Text style={[styles.scoreInline, { color: accent }]}>{item.aiScore}%</Text>
+                AI 생성확률 <Text style={[styles.scoreInline, { color: accent }]}>{item.ai_probability}%</Text>
               </Text>
-              <Text style={styles.date}>{item.date}</Text>
+              <Text style={styles.date}>{item.created_at ? item.created_at.slice(0, 10) : ''}</Text>
             </View>
             <View
               style={[
                 styles.bookmark,
-                item.saved
+                item.is_saved
                   ? { backgroundColor: accent + '22', borderWidth: 0.5, borderColor: accent }
                   : { backgroundColor: colors.surfaceAlt },
               ]}
             >
-              <Feather name="bookmark" size={16} color={item.saved ? accent : colors.textSecondary} />
+              <Feather name="bookmark" size={16} color={item.is_saved ? accent : colors.textSecondary} />
             </View>
           </TouchableOpacity>
         )}

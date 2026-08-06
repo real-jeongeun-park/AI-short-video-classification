@@ -1,27 +1,49 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Image, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../theme/colors';
-import { mockRanking } from '../data/mockData';
 
 const FILTERS = ['전체', 'AI', 'Real'];
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+}
 
 export default function RankingScreen({ navigation }) {
   const [filter, setFilter] = useState('전체');
   const [keyword, setKeyword] = useState('');
 
-  const data = useMemo(() => {
-    let list = mockRanking;
-    if (filter !== '전체') list = list.filter((item) => item.label === filter);
-    if (keyword.trim()) {
-      list = list.filter(
-        (item) =>
-          item.title?.toLowerCase().includes(keyword.toLowerCase()) ||
-          item.keywords?.some((k) => k.includes(keyword)) // item.tags -> item.keywords로 수정 및 옵셔널 체이닝 추가
-      );
-    }
-    // 항상 판별 횟수(count) 기준 내림차순 정렬
-    return [...list].sort((a, b) => b.count - a.count);
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    const fetchRankings = async () => {
+      try {
+        const apiFilter = filter === '전체' ? 'ALL' : filter.toUpperCase();
+        
+        let url = `https://grope-onboard-lure.ngrok-free.dev/api/v1/rankings?filter=${apiFilter}`;
+        
+        // 검색어가 있을 때만 keyword 파라미터 추가
+        if (keyword.trim() !== '') {
+          url += `&keyword=${encodeURIComponent(keyword)}`;
+        }
+        
+        const response = await fetch(url);
+        const json = await response.json();
+        
+        if (json.isSuccess) {
+          setData(json.result.rankings);
+        }
+      } catch (error) {
+        console.error("랭킹 데이터 불러오기 실패:", error);
+      }
+    };
+
+    fetchRankings(); // 필터나 검색어가 바뀔 때마다 서버에 다시 요청함
   }, [filter, keyword]);
 
   return (
@@ -53,20 +75,27 @@ export default function RankingScreen({ navigation }) {
 
       <FlatList
         data={data}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.log_id.toString()}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         showsVerticalScrollIndicator={false}
         renderItem={({ item, index }) => {
-          const isAI = item.label === 'AI';
+          const isAI = item.result_type === 'AI';
           const accent = isAI ? colors.danger : colors.primary;
           return (
             <TouchableOpacity
               activeOpacity={0.85}
               style={styles.row}
-              onPress={() => navigation.navigate('Result', { result: item })}
+              onPress={() => {
+                const formattedResult = {
+                  ...item,
+                  is_ai_generated: item.result_type === 'AI',
+                  thumbnail: item.thumbnail_url,
+                };
+                navigation.navigate('Result', { result: formattedResult });
+              }}
             >
               <Text style={styles.rank}>{index + 1}</Text>
-              <Image source={{ uri: item.thumbnail }} style={styles.thumb} />
+              <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} />
               <View style={styles.rowInfo}>
                 <Text numberOfLines={1} style={styles.title}>{item.title}</Text>
                 <Text style={styles.count}>{item.count ? item.count.toLocaleString() : 0}회 판별</Text>
@@ -79,7 +108,7 @@ export default function RankingScreen({ navigation }) {
               </View>
               <View style={styles.badgeWrap}>
                 <View style={[styles.verdictPill, { backgroundColor: accent + '22', borderColor: accent }]}>
-                  <Text style={[styles.verdictPillText, { color: accent }]}>{item.label}</Text>
+                  <Text style={[styles.verdictPillText, { color: accent }]}>{item.result_type}</Text>
                 </View>
               </View>
             </TouchableOpacity>

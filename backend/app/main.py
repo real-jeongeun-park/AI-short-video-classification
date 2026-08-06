@@ -11,6 +11,8 @@ from contextlib import asynccontextmanager
 from app.api.auth import router as auth_router
 from app.api.users import router as users_router
 from app.api.model import router as model_router
+from app.api.rankings import router as rankings_router
+from app.api.history import router as history_router
 
 from app.model.classifier import load_model
 
@@ -36,6 +38,8 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(users_router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(model_router)
+app.include_router(rankings_router, tags=["Rankings"])
+app.include_router(history_router, tags=["History"])
 
 @app.get("/")
 def root():
