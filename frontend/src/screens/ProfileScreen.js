@@ -7,9 +7,6 @@ import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 
 
-// ⚠️ 디자인 모드: 백엔드 연결 전까지 true로 두고 더미 데이터로 화면 확인
-const DESIGN_MODE = false;
-
 const MENU = [
   { key: 'edit', label: '프로필 수정', icon: 'user' },
   { key: 'saved', label: '저장된 결과', icon: 'bookmark' },
@@ -68,7 +65,7 @@ export default function ProfileScreen({ navigation }) {
     const handleDetectCount = async () => {
       try {
         const response = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL}/users/detect-count`,
+          `${process.env.EXPO_PUBLIC_API_URL}/profile/detect-count`,
           {
             method: "POST",
             headers: {

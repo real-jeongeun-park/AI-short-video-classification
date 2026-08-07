@@ -44,7 +44,7 @@ export default function SavedResultsScreen({ navigation }) {
 
       try {
         const response = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL}/users/saved-results`,
+          `${process.env.EXPO_PUBLIC_API_URL}/profile/saved-results`,
           {
             method: "POST",
             headers: {
@@ -189,8 +189,8 @@ export default function SavedResultsScreen({ navigation }) {
             style={styles.card}
             onPress={() => navigation.navigate('Result', { result: item })}
           >
-            {item.thumbnail ? (
-              <Image source={{ uri: item.thumbnail }} style={styles.thumb} />
+            {item.thumbnail_url ? (
+              <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} />
             ) : (
               <View style={[styles.thumb, styles.thumbPlaceholder]} />
             )}

@@ -31,6 +31,7 @@ class Video(Base):
     url = Column(Text, nullable=False)
     keyword = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    thumbnail = Column(String(255), nullable=True)
 
     detection_logs = relationship("DetectionLog", back_populates="video")
     

@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 import tempfile
 import cv2
@@ -70,7 +71,6 @@ def extract_frames(video_path: str, num_frames: int = NUM_FRAMES) -> list[Image.
 
     return frames
 
-
 def run_inference(url: str) -> dict:
     """URL -> 다운로드 -> 프레임 추출 -> 전처리 -> 모델 추론까지 전체 파이프라인"""
     video_path = None
@@ -98,3 +98,42 @@ def run_inference(url: str) -> dict:
         # 다운로드한 임시 영상 파일 정리
         if video_path and os.path.exists(video_path):
             os.remove(video_path)
+
+
+def extract_metadata(url: str) -> dict:
+    ydl_opts = {
+        "quiet": True,
+        "skip_download": True,
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+
+    return {
+        "title": info.get("title"),
+        "thumbnail": info.get("thumbnail"),       # 플랫폼이 자체 생성한 대표 썸네일 URL
+        "description": info.get("description"),   # 보통 캡션(해시태그 포함)
+        "tags": info.get("tags", []),              # 플랫폼이 제공하는 태그 (있으면)
+        "uploader": info.get("uploader"),
+    }
+
+
+def extract_hashtags(*texts: str) -> list[str]:
+    hashtags = []
+    for text in texts:
+        if not text:
+            continue
+        hashtags.extend(re.findall(r"#(\w+)", text))
+
+    # 중복 제거하면서 순서 유지
+    seen = set()
+    unique_hashtags = []
+    for tag in hashtags:
+        if tag not in seen:
+            seen.add(tag)
+            unique_hashtags.append(tag)
+
+        if len(unique_hashtags) >= 5:
+            break
+
+    return ",".join(unique_hashtags)

@@ -17,6 +17,9 @@ const formatDate = (dateString) => {
 
 export default function ResultScreen({ navigation, route }) {
   const result = route?.params?.result;
+  const label = result.is_ai_generated;
+  const accent = label ? colors.danger : colors.primary;
+  const aiScore = (result.ai_probability * 100).toFixed(1);
 
   const [userId, setUserId] = useState(null);
   const [isBookmarked, setIsBookmarked] = useState(result?.is_bookmarked ?? false);
@@ -37,11 +40,6 @@ export default function ResultScreen({ navigation, route }) {
       </View>
     );
   }
-
-  const label = result.is_ai_generated;
-  const accent = label ? colors.danger : colors.primary;
-  const aiScore = (result.ai_probability * 100).toFixed(1);
-  const keywords = result.keywords || [];
 
   const handleBookmarkChange = async () => {
     const newBookmarkState = !isBookmarked;
@@ -90,8 +88,8 @@ export default function ResultScreen({ navigation, route }) {
 
       <View style={styles.resultCard}>
         <View>
-          {result.thumbnail ? (
-            <Image source={{ uri: result.thumbnail }} style={styles.thumb} />
+          {result.thumbnail_url ? (
+            <Image source={{ uri: result.thumbnail_url }} style={styles.thumb} />
           ) : (
             <View style={[styles.thumb, styles.thumbPlaceholder]}>
               <Feather name="video" size={24} color={colors.textPlaceholder} />
@@ -124,10 +122,10 @@ export default function ResultScreen({ navigation, route }) {
         <View style={[styles.infoRow, styles.infoRowBorder]}>
           <Text style={styles.infoLabel}>Keyword</Text>
           <View style={styles.keywordRow}>
-            {keywords.length > 0 ? (
-              keywords.map((kw) => (
+            {result.keywords && result.keywords.length > 0 ? (
+              result.keywords.split(',').map((kw) => (
                 <View key={kw} style={styles.keywordChip}>
-                  <Text style={styles.keywordChipText}>#{kw}</Text>
+                  <Text style={styles.keywordChipText}>#{kw.trim()}</Text>
                 </View>
               ))
             ) : (

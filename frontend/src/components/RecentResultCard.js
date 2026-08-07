@@ -17,7 +17,7 @@ export default function RecentResultCard({ item, onPress }) {
   return (
     <TouchableOpacity activeOpacity={0.85} onPress={onPress} style={styles.card}>
       <View style={styles.imageWrap}>
-        <Image source={{ uri: item.thumbnail }} style={styles.image} />
+        <Image source={{ uri: item.thumbnail_url }} style={styles.image} />
         <LabelBadge label={item.is_ai_generated} style={styles.badge} />
       </View>
 

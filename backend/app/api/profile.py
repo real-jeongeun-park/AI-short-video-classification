@@ -26,7 +26,7 @@ class PasswordRequest(BaseModel):
     user_id: int
     password: str
 
-@router.patch("/users/nickname")
+@router.patch("/profile/nickname")
 def update_nickname(data: NicknameRequest, db: Session = Depends(get_db)):
     try:
         user = db.query(User).filter(
@@ -47,7 +47,7 @@ def update_nickname(data: NicknameRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(ex))
 
 
-@router.patch("/users/email")
+@router.patch("/profile/email")
 def update_email(data: EmailRequest, db: Session = Depends(get_db)):
     try:
         user = db.query(User).filter(
@@ -68,7 +68,7 @@ def update_email(data: EmailRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(ex))
 
 
-@router.patch("/users/password")
+@router.patch("/profile/password")
 def update_password(data: PasswordRequest, db: Session = Depends(get_db)):
     try:
         user = db.query(User).filter(
@@ -90,7 +90,7 @@ def update_password(data: PasswordRequest, db: Session = Depends(get_db)):
 
 
 
-@router.post("/users/saved-results")
+@router.post("/profile/saved-results")
 def saved_results(data: DefaultRequest, db: Session = Depends(get_db)):
     try:
         rows = (
@@ -115,9 +115,9 @@ def saved_results(data: DefaultRequest, db: Session = Depends(get_db)):
                 "ai_probability": log.ai_probability,
                 "is_ai_generated": log.is_ai_generated,
                 "title": video.title,
-                "url": video.url,
+                "thumbnail_url": video.thumbnail,
                 "date": log.detected_at,
-                "is_bookmarked": True,   # 이 쿼리에 나온 건 전부 북마크된 것
+                "is_bookmarked": True,
             }
 
             if log.is_ai_generated:
@@ -137,46 +137,8 @@ def saved_results(data: DefaultRequest, db: Session = Depends(get_db)):
     except Exception as ex:
         raise HTTPException(status_code=500, detail=str(ex))
 
-    
 
-@router.post("/home/recent-results")
-def get_recent_results(data: DefaultRequest, db: Session = Depends(get_db)):
-    try:
-        rows = (
-            db.query(DetectionLog, Video, Bookmark)
-            .join(Video, DetectionLog.video_id == Video.id)
-            .outerjoin(
-                Bookmark,
-                (Bookmark.detection_id == DetectionLog.id) & (Bookmark.user_id == data.user_id)
-            )
-            .order_by(DetectionLog.detected_at.desc())
-            .limit(5)
-            .all()
-        )
-
-        results = [
-            {
-                "log_id": log.id,
-                "video_id": video.id,
-                "url": video.url,
-                "ai_probability": log.ai_probability,
-                "is_ai_generated": log.is_ai_generated,
-                "title": video.title,
-                "date": log.detected_at,
-                "is_bookmarked": bookmark is not None,
-            }
-            for log, video, bookmark in rows
-        ]
-
-        return {"results": results}
-
-    except HTTPException:
-        raise
-    except Exception as ex:
-        raise HTTPException(status_code=500, detail=str(ex))
-    
-
-@router.post("/users/detect-count")
+@router.post("/profile/detect-count")
 def get_percentile(data: DefaultRequest, db: Session = Depends(get_db)):
     try:
         # 유저별 판정 건수 집계

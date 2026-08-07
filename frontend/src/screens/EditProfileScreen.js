@@ -43,7 +43,7 @@ export default function EditProfileScreen({ navigation }) {
         return;
       }
 
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/users/nickname`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/profile/nickname`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -71,7 +71,7 @@ export default function EditProfileScreen({ navigation }) {
         return;
       }
 
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/users/email`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/profile/email`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -99,7 +99,7 @@ export default function EditProfileScreen({ navigation }) {
         return;
       }
 
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/users/password`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/profile/password`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
