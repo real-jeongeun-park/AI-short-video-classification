@@ -14,7 +14,7 @@ from app.api.model import router as model_router
 from app.api.rankings import router as rankings_router
 from app.api.history import router as history_router
 from app.api.bookmark import router as bookmark_router
-from app.api.upload import router as upload_router
+# from app.api.upload import router as upload_router
 from app.api.home import router as home_router
 
 from app.model.classifier import load_model
@@ -44,7 +44,7 @@ app.include_router(model_router)
 app.include_router(rankings_router, prefix="/api/v1/ranking", tags=["Rankings"])
 app.include_router(history_router, prefix="/api/v1/users", tags=["History"])
 app.include_router(bookmark_router)
-app.include_router(upload_router)
+# app.include_router(upload_router)
 app.include_router(home_router)
 
 @app.get("/")

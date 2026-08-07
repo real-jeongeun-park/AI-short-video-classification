@@ -50,10 +50,14 @@ def get_history(data: HistoryRequest, db: Session = Depends(get_db)):
         real_count = sum(1 for log in total_logs if log.is_ai_generated == False)
         total_count = len(total_logs)
 
-        # 3. 탭(type) 및 정렬(sort) 조건에 맞게 데이터 가져오기 (JOIN 사용)
+        # 3. 탭(type) 및 정렬(sort) 조건에 맞게 데이터 가져오기
+        # [수정] Video.url, Video.keyword, Video.thumbnail 데이터를 추가로 가져옵니다.
         query = db.query(
             DetectionLog.id.label("log_id"),
             Video.title,
+            Video.url,
+            Video.keyword,
+            Video.thumbnail,
             DetectionLog.is_ai_generated,
             DetectionLog.ai_probability,
             DetectionLog.detected_at,
@@ -65,19 +69,21 @@ def get_history(data: HistoryRequest, db: Session = Depends(get_db)):
          )\
          .filter(DetectionLog.user_id == user.id)
 
-        # 탭(type) 필터링 적용
-        if data.api_sort == "AI":
+        # 탭(type) 필터링 적용 
+        # [수정] api_sort가 아닌 api_type으로 필터링하도록 버그 수정
+        if data.api_type == "AI":
             query = query.filter(DetectionLog.is_ai_generated == True)
-        elif data.api_sort == "REAL":
+        elif data.api_type == "REAL":
             query = query.filter(DetectionLog.is_ai_generated == False)
 
         # 정렬(sort) 조건 적용
         if data.api_sort == "LATEST":
             query = query.order_by(desc(DetectionLog.detected_at))
         elif data.api_sort == "PROBABILITY":
-            if data.api_sort == "AI":
+            # [수정] AI는 확률 높은 순(내림차순), REAL은 확률 낮은 순(오름차순)으로 정렬
+            if data.api_type == "AI":
                 query = query.order_by(desc(DetectionLog.ai_probability))
-            elif data.api_sort == "REAL":
+            elif data.api_type == "REAL":
                 query = query.order_by(asc(DetectionLog.ai_probability))
 
         # 최종 데이터 추출
@@ -89,11 +95,13 @@ def get_history(data: HistoryRequest, db: Session = Depends(get_db)):
             history_list.append({
                 "log_id": log.log_id,
                 "title": log.title,
-                "thumbnail_url": "https://dummy-image-url.com/thumb.jpg",
+                "url": log.url, # [수정] 링크 전달
+                "thumbnail_url": log.thumbnail if log.thumbnail else "https://dummy-image-url.com/thumb.jpg", # [수정] 실제 썸네일 적용
                 "result_type": "AI" if log.is_ai_generated else "REAL",
                 "ai_probability": round(log.ai_probability * 100, 1),
                 "is_saved": log.bookmark_id is not None,   
-                "created_at": log.detected_at.strftime("%Y-%m-%dT%H:%M:%SZ") if log.detected_at else None
+                "created_at": log.detected_at.isoformat() if log.detected_at else None, # [수정] 프론트 변환을 위해 ISO 포맷 유지
+                "keywords": log.keyword.split(",") if log.keyword else [] # [수정] 키워드 배열 전달
             })
 
         return {

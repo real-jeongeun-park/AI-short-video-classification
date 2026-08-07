@@ -10,10 +10,6 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: str = "5432"
 
-    SECRET_KEY: str = "dummy-key-for-local-dev-only"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
-
     @property
     def DATABASE_URL(self) -> str:
         return (

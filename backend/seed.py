@@ -65,7 +65,6 @@ def seed():
                 ai_probability=prob,
                 is_ai_generated=prob >= 0.5,
                 detected_at=datetime.now(timezone.utc) - timedelta(days=i),
-                is_bookmarked=random.choice([True, False]),
             ))
         db.add_all(logs)
         db.commit()

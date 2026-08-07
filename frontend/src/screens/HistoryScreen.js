@@ -6,6 +6,11 @@ import * as SecureStore from 'expo-secure-store';
 
 const SORTS = ['최신순', 'AI 생성 확률순'];
 
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  return typeof dateString === 'string' ? dateString.split('T')[0].replace(/-/g, '.') : '';
+};
+
 export default function HistoryScreen({ navigation }) {
   const [tab, setTab] = useState('AI'); // 'AI' | 'Real'
   const [sort, setSort] = useState('최신순');
@@ -114,19 +119,42 @@ export default function HistoryScreen({ navigation }) {
         data={data}
         keyExtractor={(item) => item.log_id.toString()}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
+
+        initialNumToRender={20}      
+        maxToRenderPerBatch={20}    
+        windowSize={10}             
+        removeClippedSubviews={true}
+        
         renderItem={({ item }) => (
           <TouchableOpacity
             activeOpacity={0.85}
             style={styles.card}
-            onPress={() => navigation.navigate('Result', { result: item })}
+            onPress={() => {
+              // [수정] Result 화면으로 넘어갈 때 포맷팅 변환 (0.01배 확률, 썸네일, 링크 등)
+              const formattedResult = {
+                ...item,
+                is_ai_generated: item.result_type === 'AI',
+                thumbnail: item.thumbnail_url,
+                keywords: Array.isArray(item.keywords) ? item.keywords.join(',') : item.keywords,
+                ai_probability: item.ai_probability * 0.01,
+                date: item.created_at // 원본 데이터 전달
+              };
+              navigation.navigate('Result', { result: formattedResult });
+            }}
           >
-            <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} />
+            {/* [수정] 썸네일 이미지가 없으면 뼈대만 보여주도록 개선 */}
+            {item.thumbnail_url ? (
+              <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} resizeMode="cover" />
+            ) : (
+              <View style={[styles.thumb, { backgroundColor: colors.surfaceAlt }]} />
+            )}
             <View style={styles.info}>
               <Text numberOfLines={1} style={styles.itemTitle}>{item.title}</Text>
               <Text style={styles.caption}>
                 AI 생성확률 <Text style={[styles.scoreInline, { color: accent }]}>{item.ai_probability}%</Text>
               </Text>
-              <Text style={styles.date}>{item.created_at ? item.created_at.slice(0, 10) : ''}</Text>
+              {/* [수정] 날짜 포맷 함수 적용 */}
+              <Text style={styles.date}>{formatDate(item.created_at)}</Text>
             </View>
             <View
               style={[

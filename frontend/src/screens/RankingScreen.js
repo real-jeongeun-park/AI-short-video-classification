@@ -7,7 +7,10 @@ const FILTERS = ['전체', 'AI', 'Real'];
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
+  if (typeof dateString === 'string' && dateString.includes('.')) return dateString;
+  
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -92,6 +95,8 @@ export default function RankingScreen({ navigation }) {
         renderItem={({ item, index }) => {
           const isAI = item.result_type === 'AI';
           const accent = isAI ? colors.danger : colors.primary;
+          const displayCount = item.analysis_count || 1;
+
           return (
             <TouchableOpacity
               activeOpacity={0.85}
@@ -101,6 +106,11 @@ export default function RankingScreen({ navigation }) {
                   ...item,
                   is_ai_generated: item.result_type === 'AI',
                   thumbnail: item.thumbnail_url,
+
+                  keywords: Array.isArray(item.keywords) ? item.keywords.join(',') : item.keywords,
+                  
+                  ai_probability: item.ai_probability,
+                  date: item.date 
                 };
                 navigation.navigate('Result', { result: formattedResult });
               }}
@@ -109,7 +119,7 @@ export default function RankingScreen({ navigation }) {
               <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} />
               <View style={styles.rowInfo}>
                 <Text numberOfLines={1} style={styles.title}>{item.title}</Text>
-                <Text style={styles.count}>{item.count ? item.count.toLocaleString() : 0}회 판별</Text>
+                <Text style={styles.count}>{displayCount.toLocaleString()}회 판별</Text>
                 <View style={styles.tagRow}>
                   {/* item.tags -> item.keywords로 수정 */}
                   {(item.keywords || []).map((k) => (
