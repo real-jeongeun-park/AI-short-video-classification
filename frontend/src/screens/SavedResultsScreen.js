@@ -190,7 +190,7 @@ export default function SavedResultsScreen({ navigation }) {
             onPress={() => navigation.navigate('Result', { result: item })}
           >
             {item.thumbnail_url ? (
-              <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} />
+              <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} resizeMode="cover"/>
             ) : (
               <View style={[styles.thumb, styles.thumbPlaceholder]} />
             )}

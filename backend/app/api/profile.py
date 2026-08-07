@@ -116,6 +116,8 @@ def saved_results(data: DefaultRequest, db: Session = Depends(get_db)):
                 "is_ai_generated": log.is_ai_generated,
                 "title": video.title,
                 "thumbnail_url": video.thumbnail,
+                "url": video.url,
+                "keywords": video.keyword,
                 "date": log.detected_at,
                 "is_bookmarked": True,
             }

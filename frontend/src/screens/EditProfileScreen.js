@@ -159,9 +159,6 @@ export default function EditProfileScreen({ navigation }) {
           <LinearGradient colors={[colors.primary, colors.danger]} style={styles.avatar}>
               <Feather name="user" size={40} color="#fff" />
           </LinearGradient>
-          <TouchableOpacity style={styles.cameraBtn}>
-            <Feather name="camera" size={16} color="#0A0A0F" />
-          </TouchableOpacity>
         </View>
 
         {/* 아이디 */}
@@ -228,11 +225,6 @@ const styles = StyleSheet.create({
   headerTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '700' },
   avatarWrap: { alignItems: 'center', marginTop: spacing.xl, marginBottom: spacing.xl },
   avatar: { width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center' },
-  cameraBtn: {
-    position: 'absolute', bottom: 0, right: '38%',
-    width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary,
-    alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: colors.background,
-  },
   label: { color: colors.primary, marginBottom: spacing.sm, fontSize: 13 },
 
   fieldRow: {
