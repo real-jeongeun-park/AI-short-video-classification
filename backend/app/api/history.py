@@ -18,7 +18,6 @@ class HistoryRequest(BaseModel):
 @router.post("/history")
 def get_history(data: HistoryRequest, db: Session = Depends(get_db)):
     try:
-        # 1. 닉네임으로 유저 찾기
         user = db.query(User).filter(User.id == data.user_id).first()
         if not user:
             return JSONResponse(
@@ -31,7 +30,6 @@ def get_history(data: HistoryRequest, db: Session = Depends(get_db)):
                 }
             )
 
-        # 2. 유저의 전체 분석 기록 통계(summary) 구하기
         total_logs = db.query(DetectionLog).filter(DetectionLog.user_id == user.id).all()
 
         if not total_logs:
@@ -45,13 +43,10 @@ def get_history(data: HistoryRequest, db: Session = Depends(get_db)):
                 }
             )
 
-        # 통계 계산
         ai_count = sum(1 for log in total_logs if log.is_ai_generated == True)
         real_count = sum(1 for log in total_logs if log.is_ai_generated == False)
         total_count = len(total_logs)
 
-        # 3. 탭(type) 및 정렬(sort) 조건에 맞게 데이터 가져오기
-        # [수정] Video.url, Video.keyword, Video.thumbnail 데이터를 추가로 가져옵니다.
         query = db.query(
             DetectionLog.id.label("log_id"),
             Video.title,
@@ -69,39 +64,34 @@ def get_history(data: HistoryRequest, db: Session = Depends(get_db)):
          )\
          .filter(DetectionLog.user_id == user.id)
 
-        # 탭(type) 필터링 적용 
-        # [수정] api_sort가 아닌 api_type으로 필터링하도록 버그 수정
         if data.api_type == "AI":
             query = query.filter(DetectionLog.is_ai_generated == True)
         elif data.api_type == "REAL":
             query = query.filter(DetectionLog.is_ai_generated == False)
 
-        # 정렬(sort) 조건 적용
         if data.api_sort == "LATEST":
             query = query.order_by(desc(DetectionLog.detected_at))
         elif data.api_sort == "PROBABILITY":
-            # [수정] AI는 확률 높은 순(내림차순), REAL은 확률 낮은 순(오름차순)으로 정렬
+            # AI는 확률 높은 순(내림차순), REAL은 확률 낮은 순(오름차순)으로 정렬
             if data.api_type == "AI":
                 query = query.order_by(desc(DetectionLog.ai_probability))
             elif data.api_type == "REAL":
                 query = query.order_by(asc(DetectionLog.ai_probability))
 
-        # 최종 데이터 추출
         logs = query.all()
 
-        # 4. 명세서 형식에 맞게 데이터 가공하기
         history_list = []
         for log in logs:
             history_list.append({
                 "log_id": log.log_id,
                 "title": log.title,
-                "url": log.url, # [수정] 링크 전달
-                "thumbnail_url": log.thumbnail if log.thumbnail else "https://dummy-image-url.com/thumb.jpg", # [수정] 실제 썸네일 적용
+                "url": log.url,
+                "thumbnail_url": log.thumbnail if log.thumbnail else "https://dummy-image-url.com/thumb.jpg", 
                 "result_type": "AI" if log.is_ai_generated else "REAL",
                 "ai_probability": round(log.ai_probability * 100, 1),
                 "is_saved": log.bookmark_id is not None,   
-                "created_at": log.detected_at.isoformat() if log.detected_at else None, # [수정] 프론트 변환을 위해 ISO 포맷 유지
-                "keywords": log.keyword.split(",") if log.keyword else [] # [수정] 키워드 배열 전달
+                "created_at": log.detected_at.isoformat() if log.detected_at else None, 
+                "keywords": log.keyword.split(",") if log.keyword else [] 
             })
 
         return {
