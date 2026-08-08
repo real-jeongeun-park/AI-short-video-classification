@@ -89,40 +89,45 @@ def update_password(data: PasswordRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(ex))
 
 
-
 @router.post("/profile/saved-results")
 def saved_results(data: DefaultRequest, db: Session = Depends(get_db)):
     try:
-        rows = (
-            db.query(DetectionLog, Video, Bookmark)
-            .join(Video, DetectionLog.video_id == Video.id)
-            .join(Bookmark, Bookmark.detection_id == DetectionLog.id)
-            .filter(
-                DetectionLog.user_id == data.user_id,
-                Bookmark.user_id == data.user_id,
+        latest_per_video = (
+            db.query(
+                DetectionLog.video_id.label("video_id"),
+                func.max(DetectionLog.detected_at).label("last_detected_at"),
             )
-            .order_by(DetectionLog.detected_at.desc())
+            .group_by(DetectionLog.video_id)
+            .subquery()
+        )
+
+        rows = (
+            db.query(Video, Bookmark, latest_per_video.c.last_detected_at)
+            .join(Bookmark, Bookmark.video_id == Video.id)
+            .outerjoin(latest_per_video, latest_per_video.c.video_id == Video.id)
+            .filter(Bookmark.user_id == data.user_id)
+            .order_by(Bookmark.created_at.desc())
             .all()
         )
 
         true_results = []
         false_results = []
 
-        for log, video, bookmark in rows:
+        for video, bookmark, last_detected_at in rows:
             item = {
-                "log_id": log.id,
                 "video_id": video.id,
-                "ai_probability": log.ai_probability,
-                "is_ai_generated": log.is_ai_generated,
+                "ai_probability": video.ai_probability,
+                "is_ai_generated": video.is_ai_generated,
                 "title": video.title,
                 "thumbnail_url": video.thumbnail,
                 "url": video.url,
                 "keywords": video.keyword,
-                "date": log.detected_at,
+                "bookmark_date": bookmark.created_at,
+                "date": last_detected_at,
                 "is_bookmarked": True,
             }
 
-            if log.is_ai_generated:
+            if video.is_ai_generated:
                 true_results.append(item)
             else:
                 false_results.append(item)
@@ -143,7 +148,6 @@ def saved_results(data: DefaultRequest, db: Session = Depends(get_db)):
 @router.post("/profile/detect-count")
 def get_percentile(data: DefaultRequest, db: Session = Depends(get_db)):
     try:
-        # 유저별 판정 건수 집계
         counts = (
             db.query(
                 DetectionLog.user_id,
@@ -154,12 +158,11 @@ def get_percentile(data: DefaultRequest, db: Session = Depends(get_db)):
         )
 
         if not counts:
-            return {"detect_count": 0, "percentile": 100}
+            return {"count": 0, "top_percent": 100}
 
         my_count = next((c.count for c in counts if c.user_id == data.user_id), 0)
         total_users = len(counts)
 
-        # 나보다 판정 수가 적은 사람 수
         lower_count = sum(1 for c in counts if c.count < my_count)
 
         # 백분위 계산

@@ -8,21 +8,21 @@ from app.models import Bookmark
 router = APIRouter()
 
 class BookmarkRequest(BaseModel):
-    detection_id: int
+    video_id: int
     user_id: int
 
 @router.post("/bookmarks")
 def add_bookmark(data: BookmarkRequest, db: Session = Depends(get_db)):
     try:
         existing = db.query(Bookmark).filter(
-            Bookmark.detection_id == data.detection_id,
+            Bookmark.video_id == data.video_id,
             Bookmark.user_id == data.user_id,
         ).first()
 
         if existing:
             return {"id": existing.id, "is_bookmarked": True}
 
-        bookmark = Bookmark(detection_id=data.detection_id, user_id=data.user_id)
+        bookmark = Bookmark(video_id=data.video_id, user_id=data.user_id)
         db.add(bookmark)
         db.commit()
         db.refresh(bookmark)
@@ -38,7 +38,7 @@ def add_bookmark(data: BookmarkRequest, db: Session = Depends(get_db)):
 def remove_bookmark(data: BookmarkRequest, db: Session = Depends(get_db)):
     try:
         bookmark = db.query(Bookmark).filter(
-            Bookmark.detection_id == data.detection_id,
+            Bookmark.video_id == data.video_id,
             Bookmark.user_id == data.user_id,
         ).first()
 

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Image, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Image, StyleSheet, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../theme/colors';
+import * as SecureStore from "expo-secure-store";
 
 const FILTERS = ['전체', 'AI', 'Real'];
 
@@ -17,9 +18,9 @@ const formatDate = (dateString) => {
   return `${year}.${month}.${day}`;
 }
 
-export default function RankingScreen({ navigation }) {
+export default function RankingScreen({ navigation, route }) {
   const [filter, setFilter] = useState('전체');
-  const [keyword, setKeyword] = useState('');
+  const [searchText, setSearchText] = useState('');
 
   const [data, setData] = useState([]);
   const [userId, setUserId] = useState(null);
@@ -29,9 +30,14 @@ export default function RankingScreen({ navigation }) {
       const savedUserId = await SecureStore.getItemAsync("userId");
       if (savedUserId) setUserId(savedUserId);
     };
-
     loadUserInfo();
   }, []);
+
+  useEffect(() => {
+    const keyword = route?.params?.keyword;
+    if (!keyword) return;
+    setSearchText(keyword);
+  }, [route?.params?.keyword]);
 
   useEffect(() => {
     const fetchRankings = async () => {
@@ -43,7 +49,7 @@ export default function RankingScreen({ navigation }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             filter: apiFilter,
-            keyword: keyword.trim(),
+            search_text: searchText.trim(),
           }),
         });
 
@@ -58,7 +64,7 @@ export default function RankingScreen({ navigation }) {
     };
 
     fetchRankings(); // 필터나 검색어가 바뀔 때마다 서버에 다시 요청함
-  }, [filter, keyword]);
+  }, [filter, searchText]);
 
   return (
     <View style={styles.container}>
@@ -69,8 +75,8 @@ export default function RankingScreen({ navigation }) {
           style={styles.searchInput}
           placeholder="키워드 검색"
           placeholderTextColor={colors.textPlaceholder}
-          value={keyword}
-          onChangeText={setKeyword}
+          value={searchText}
+          onChangeText={setSearchText}
         />
         <Feather name="search" size={18} color={colors.textSecondary} />
       </View>
@@ -89,7 +95,7 @@ export default function RankingScreen({ navigation }) {
 
       <FlatList
         data={data}
-        keyExtractor={(item) => item.log_id.toString()}
+        keyExtractor={(item) => String(item.video_id)}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         showsVerticalScrollIndicator={false}
         renderItem={({ item, index }) => {
@@ -98,41 +104,45 @@ export default function RankingScreen({ navigation }) {
           const displayCount = item.analysis_count || 1;
 
           return (
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={styles.row}
-              onPress={() => {
-                const formattedResult = {
-                  ...item,
-                  is_ai_generated: item.result_type === 'AI',
-                  thumbnail: item.thumbnail_url,
-
-                  keywords: Array.isArray(item.keywords) ? item.keywords.join(',') : item.keywords,
-                  
-                  ai_probability: item.ai_probability,
-                  date: item.date 
-                };
-                navigation.navigate('Result', { result: formattedResult });
-              }}
-            >
-              <Text style={styles.rank}>{index + 1}</Text>
-              <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} />
-              <View style={styles.rowInfo}>
-                <Text numberOfLines={1} style={styles.title}>{item.title}</Text>
-                <Text style={styles.count}>{displayCount.toLocaleString()}회 판별</Text>
-                <View style={styles.tagRow}>
-                  {/* item.tags -> item.keywords로 수정 */}
-                  {(item.keywords || []).map((k) => (
-                    <Text key={k} style={styles.tag}>#{k}</Text>
-                  ))}
+            <View style={styles.row}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={styles.rowTouchable}
+                onPress={() => {
+                  const formattedResult = {
+                    ...item,
+                    is_ai_generated: item.result_type === 'AI',
+                    thumbnail: item.thumbnail_url,
+                    keywords: Array.isArray(item.keywords) ? item.keywords.join(',') : item.keywords,
+                    ai_probability: item.ai_probability,
+                    date: item.date 
+                  };
+                  navigation.navigate('Result', { result: formattedResult });
+                }}
+              >
+                <Text style={styles.rank}>{index + 1}</Text>
+                <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} />
+                <View style={styles.rowInfo}>
+                  <Text numberOfLines={1} style={styles.title}>{item.title}</Text>
+                  <Text style={styles.count}>{displayCount.toLocaleString()}회 판별</Text>
                 </View>
-              </View>
-              <View style={styles.badgeWrap}>
-                <View style={[styles.verdictPill, { backgroundColor: accent + '22', borderColor: accent }]}>
-                  <Text style={[styles.verdictPillText, { color: accent }]}>{item.result_type}</Text>
+                <View style={styles.badgeWrap}>
+                  <View style={[styles.verdictPill, { backgroundColor: accent + '22', borderColor: accent }]}>
+                    <Text style={[styles.verdictPillText, { color: accent }]}>{item.result_type}</Text>
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.tagRow}
+                contentContainerStyle={styles.tagRowContent}
+              >
+                {(item.keywords || []).map((k) => (
+                  <Text key={k} style={styles.tag}>#{k}</Text>
+                ))}
+              </ScrollView>
+            </View>
           );
         }}
       />
@@ -198,9 +208,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   row: {
+    marginBottom: spacing.md,
+    width: '100%',
+  },
+  rowTouchable: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.lg,
   },
   rank: {
     width: 24,
@@ -225,8 +238,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   tagRow: {
+    marginLeft: 24 + 56 + spacing.md,
+    width: '70%',
+  },
+  tagRowContent: {
     flexDirection: 'row',
-    marginTop: spacing.xs,
+    alignItems: 'center',
   },
   tag: {
     color: colors.textSecondary,

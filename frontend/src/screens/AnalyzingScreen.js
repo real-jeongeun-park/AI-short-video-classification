@@ -7,6 +7,7 @@ import { colors, typography, spacing, radius } from '../theme/colors';
 
 export default function AnalyzingScreen({ navigation, route }) {
   const url = route?.params?.url
+  const cleaned_url = url.split("?")[0]
   
   const [userId, setUserId] = useState(null);
   const [progress, setProgress] = useState(0.1);
@@ -41,7 +42,7 @@ export default function AnalyzingScreen({ navigation, route }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            url: url,
+            url: cleaned_url,
             user_id: Number(userId),
           }),
         });
@@ -86,7 +87,7 @@ export default function AnalyzingScreen({ navigation, route }) {
 
       <View style={styles.urlBox}>
         <Feather name="link" size={16} color={colors.textSecondary} />
-        <Text style={styles.urlText}>{url}</Text>
+        <Text style={styles.urlText}>{cleaned_url}</Text>
       </View>
 
       {errorMsg ? (

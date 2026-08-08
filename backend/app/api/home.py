@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -15,32 +16,41 @@ class DefaultRequest(BaseModel):
 @router.post("/home/recent-results")
 def get_recent_results(data: DefaultRequest, db: Session = Depends(get_db)):
     try:
+        latest_per_video = (
+            db.query(
+                DetectionLog.video_id.label("video_id"),
+                func.max(DetectionLog.detected_at).label("last_detected_at"),
+            )
+            .group_by(DetectionLog.video_id)
+            .order_by(func.max(DetectionLog.detected_at).desc())
+            .limit(5)
+            .subquery()
+        )
+
         rows = (
-            db.query(DetectionLog, Video, Bookmark)
-            .join(Video, DetectionLog.video_id == Video.id)
+            db.query(Video, latest_per_video.c.last_detected_at, Bookmark)
+            .join(latest_per_video, Video.id == latest_per_video.c.video_id)
             .outerjoin(
                 Bookmark,
-                (Bookmark.detection_id == DetectionLog.id) & (Bookmark.user_id == data.user_id)
+                (Bookmark.video_id == Video.id) & (Bookmark.user_id == data.user_id)
             )
-            .order_by(DetectionLog.detected_at.desc())
-            .limit(5)
+            .order_by(latest_per_video.c.last_detected_at.desc())
             .all()
         )
 
         results = [
             {
-                "log_id": log.id,
                 "video_id": video.id,
                 "title": video.title,
                 "url": video.url,
                 "thumbnail_url": video.thumbnail,
                 "keywords": video.keyword,
-                "ai_probability": log.ai_probability,
-                "is_ai_generated": log.is_ai_generated,
-                "date": log.detected_at,
+                "ai_probability": video.ai_probability,
+                "is_ai_generated": video.is_ai_generated,
+                "date": last_detected_at,
                 "is_bookmarked": bookmark is not None,
             }
-            for log, video, bookmark in rows
+            for video, last_detected_at, bookmark in rows
         ]
 
         return {"results": results}
@@ -49,4 +59,3 @@ def get_recent_results(data: DefaultRequest, db: Session = Depends(get_db)):
         raise
     except Exception as ex:
         raise HTTPException(status_code=500, detail=str(ex))
-    

@@ -120,7 +120,7 @@ export default function ProfileScreen({ navigation }) {
           </View>
           <Text style={styles.percentileText}>
             <Text style={styles.percentileNickname}>{nickname}</Text>
-            <Text style={styles.percentileSub}> 님은</Text>
+            <Text style={styles.percentileSub}>님은</Text>
           </Text>
           <Text style={styles.percentileText}>
             <Text style={styles.percentileValue}>상위 {percentile.toFixed(1)}%</Text>

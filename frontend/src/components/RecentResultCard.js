@@ -18,7 +18,6 @@ export default function RecentResultCard({ item, onPress }) {
     <TouchableOpacity activeOpacity={0.85} onPress={onPress} style={styles.card}>
       <View style={styles.imageWrap}>
         <Image source={{ uri: item.thumbnail_url }} style={styles.image} />
-        <LabelBadge label={item.is_ai_generated} style={styles.badge} />
       </View>
 
       <View style={styles.info}>
@@ -44,7 +43,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   image: { width: '100%', height: '100%' },
-  badge: { position: 'absolute', top: 10, right: 10 },
   info: {
     marginTop: spacing.md,
   },

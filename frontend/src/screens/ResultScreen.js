@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, Linking, Image, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 import { colors, typography, spacing, radius } from '../theme/colors';
 import LabelBadge from '../components/LabelBadge';
+
 
 const formatDate = (dateString) => {
   if (!dateString) return '-';
@@ -52,7 +53,7 @@ export default function ResultScreen({ navigation, route }) {
         method: isBookmarked ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          detection_id: result.log_id,
+          video_id: result.video_id,
           user_id: Number(userId),
         }),
       });
@@ -83,7 +84,9 @@ export default function ResultScreen({ navigation, route }) {
 
       <View style={styles.urlBox}>
         <Feather name="link" size={16} color={colors.textSecondary} />
-        <Text style={styles.urlText} numberOfLines={1}>{result.url}</Text>
+        <Text style={styles.urlText} numberOfLines={1} onPress={() => Linking.openURL(result.url)}>
+          {result.url}
+        </Text>
       </View>
 
       <View style={styles.resultCard}>
@@ -95,13 +98,15 @@ export default function ResultScreen({ navigation, route }) {
               <Feather name="video" size={24} color={colors.textPlaceholder} />
             </View>
           )}
-          <LabelBadge label={label} style={styles.badge} />
         </View>
         <View style={styles.resultInfo}>
           <Text style={styles.caption}>AI 생성 확률</Text>
           <Text style={[styles.scoreText, { color: accent }]}>{aiScore}%</Text>
           <Text style={styles.description}>
-            {label ? '이 숏폼은 AI가\n생성했을 확률이 높아요.' : '이 숏폼은 AI가\n생성했을 확률이 낮아요.'}
+            이 숏폼은 AI가{"\n"}생성했을 확률이{" "}
+            <Text style={styles.description_pred}>
+              {label ? '높아요' : '낮아요'}
+            </Text>
           </Text>
         </View>
       </View>
@@ -124,9 +129,13 @@ export default function ResultScreen({ navigation, route }) {
           <View style={styles.keywordRow}>
             {result.keywords && result.keywords.length > 0 ? (
               result.keywords.split(',').map((kw) => (
-                <View key={kw} style={styles.keywordChip}>
+                <TouchableOpacity
+                  key={kw}
+                  style={styles.keywordChip}
+                  onPress={() => navigation.navigate('Ranking', { keyword: kw.trim() })}
+                >
                   <Text style={styles.keywordChipText}>#{kw.trim()}</Text>
-                </View>
+                </TouchableOpacity>
               ))
             ) : (
               <Text style={styles.infoValue}>-</Text>
@@ -190,10 +199,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badge: { position: 'absolute', top: 7, left: 7 },
-  resultInfo: { flex: 1, marginLeft: spacing.md, justifyContent: 'center', alignItems: 'center' },
+  resultInfo: { flex: 1, marginLeft: spacing.md, justifyContent: 'center', alignItems: 'center', },
   caption: { fontSize: 15, color: colors.textPrimary },
   scoreText: { fontSize: 34, fontWeight: '800', marginTop: 4 },
-  description: { fontSize: 16, color: colors.textSecondary, marginTop: spacing.sm, textAlign: 'center' },
+  description: { fontSize: 16, color: colors.textSecondary, marginTop: spacing.xs, textAlign: 'center', lineHeight: 23, },
+  description_pred: { fontSize: 16, color: colors.textSecondary, textAlign: 'center', fontWeight: 700, },
 
   infoCard: {
     backgroundColor: colors.surface,

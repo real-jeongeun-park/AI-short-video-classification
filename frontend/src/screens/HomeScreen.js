@@ -93,7 +93,7 @@ export default function HomeScreen({ navigation }) {
 
       <FlatList
         data={recentResults}
-        keyExtractor={(item) => String(item.log_id)}
+        keyExtractor={(item) => String(item.video_id)}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: spacing.lg }}

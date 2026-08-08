@@ -117,7 +117,7 @@ export default function HistoryScreen({ navigation }) {
 
       <FlatList
         data={data}
-        keyExtractor={(item) => item.log_id.toString()}
+        keyExtractor={(item) => String(item.video_id)}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
 
         initialNumToRender={20}      
@@ -130,14 +130,13 @@ export default function HistoryScreen({ navigation }) {
             activeOpacity={0.85}
             style={styles.card}
             onPress={() => {
-              // [수정] Result 화면으로 넘어갈 때 포맷팅 변환 (0.01배 확률, 썸네일, 링크 등)
               const formattedResult = {
                 ...item,
                 is_ai_generated: item.result_type === 'AI',
                 thumbnail: item.thumbnail_url,
                 keywords: Array.isArray(item.keywords) ? item.keywords.join(',') : item.keywords,
                 ai_probability: item.ai_probability * 0.01,
-                date: item.created_at // 원본 데이터 전달
+                date: item.date
               };
               navigation.navigate('Result', { result: formattedResult });
             }}
@@ -154,7 +153,7 @@ export default function HistoryScreen({ navigation }) {
                 AI 생성확률 <Text style={[styles.scoreInline, { color: accent }]}>{item.ai_probability}%</Text>
               </Text>
               {/* [수정] 날짜 포맷 함수 적용 */}
-              <Text style={styles.date}>{formatDate(item.created_at)}</Text>
+              <Text style={styles.date}>최근 분석일: {formatDate(item.user_date)}</Text>
             </View>
             <View
               style={[

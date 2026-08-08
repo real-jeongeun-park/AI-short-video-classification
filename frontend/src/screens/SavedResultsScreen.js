@@ -81,7 +81,7 @@ export default function SavedResultsScreen({ navigation }) {
       return;
     }
 
-    const removeFromList = (list) => list.filter((r) => r.log_id !== item.log_id);
+    const removeFromList = (list) => list.filter((r) => r.video_id !== item.video_id);
 
     if (tab === 'AI') {
       setTrueResults((prev) => removeFromList(prev));
@@ -96,7 +96,7 @@ export default function SavedResultsScreen({ navigation }) {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          detection_id: item.log_id,
+          video_id: item.video_id,
           user_id: userId,
         }),
       });
@@ -131,7 +131,7 @@ export default function SavedResultsScreen({ navigation }) {
         : copied.sort((a, b) => a.ai_probability - b.ai_probability);
     }
 
-    return copied.sort((a, b) => new Date(b.date) - new Date(a.date));
+    return copied.sort((a, b) => new Date(b.bookmark_date) - new Date(a.bookmark_date));
   }, [trueResults, falseResults, tab, sort]);
 
   return (
@@ -181,7 +181,7 @@ export default function SavedResultsScreen({ navigation }) {
 
       <FlatList
         data={sortedResults}
-        keyExtractor={(item) => String(item.log_id)}
+        keyExtractor={(item) => String(item.video_id)}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -203,7 +203,7 @@ export default function SavedResultsScreen({ navigation }) {
                   {(item.ai_probability * 100).toFixed(1)}%
                 </Text>
               </Text>
-              <Text style={styles.date}>{formatDate(item.date)}</Text>
+              <Text style={styles.date}>북마크 날짜: {formatDate(item.bookmark_date)}</Text>
             </View>
             <TouchableOpacity
               style={tab === 'AI' ? styles.bookmark_true : styles.bookmark_false}
