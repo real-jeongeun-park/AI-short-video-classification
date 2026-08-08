@@ -22,6 +22,7 @@ import SavedResultsScreen from '../screens/SavedResultsScreen';
 
 const RootStack = createNativeStackNavigator();
 const HomeStackNav = createNativeStackNavigator();
+const RankingStackNav = createNativeStackNavigator();
 const ProfileStackNav = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -32,6 +33,15 @@ function HomeStack() {
       <HomeStackNav.Screen name="Analyzing" component={AnalyzingScreen} />
       <HomeStackNav.Screen name="Result" component={ResultScreen} />
     </HomeStackNav.Navigator>
+  );
+}
+
+function RankingStack() {
+  return (
+    <RankingStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <RankingStackNav.Screen name="RankingMain" component={RankingScreen} />
+      <RankingStackNav.Screen name="Result" component={ResultScreen} />
+    </RankingStackNav.Navigator>
   );
 }
 
@@ -74,7 +84,7 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Home" component={HomeStack} />
-      <Tab.Screen name="Ranking" component={RankingScreen} />
+      <Tab.Screen name="Ranking" component={RankingStack} />
       <Tab.Screen name="History" component={HistoryScreen} />
       <Tab.Screen name="Profile" component={ProfileStack} />
     </Tab.Navigator>
