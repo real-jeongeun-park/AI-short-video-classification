@@ -5,7 +5,10 @@ import { FontAwesome } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 import { colors, typography, spacing, radius } from '../theme/colors';
 import LabelBadge from '../components/LabelBadge';
-
+import { useRef } from 'react';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import ShareResultCard from '../components/ShareResultCard';
 
 const formatDate = (dateString) => {
   if (!dateString) return '-';
@@ -24,6 +27,31 @@ export default function ResultScreen({ navigation, route }) {
 
   const [userId, setUserId] = useState(null);
   const [isBookmarked, setIsBookmarked] = useState(result?.is_bookmarked ?? false);
+
+  const shareCardRef = useRef(null);
+
+  const handleShare = async () => {
+    try {
+      const uri = await captureRef(shareCardRef, {
+        format: 'png',
+        quality: 1,
+      });
+
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        alert('이 기기에서는 공유 기능을 사용할 수 없어요.');
+        return;
+      }
+
+      await Sharing.shareAsync(uri, {
+        mimeType: 'image/png',
+        dialogTitle: '분석 결과 공유하기',
+      });
+    } catch (error) {
+      console.error('공유 실패:', error);
+      alert('공유에 실패했습니다.');
+    }
+  };
 
   useEffect(() => {
     const loadUserInfo = async () => {
@@ -163,9 +191,13 @@ export default function ResultScreen({ navigation, route }) {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.shareBtn, { backgroundColor: accent }]}>
+        <TouchableOpacity style={[styles.shareBtn, { backgroundColor: accent }]} onPress={handleShare}>
           <Text style={styles.shareBtnText}>공유하기</Text>
         </TouchableOpacity>
+      </View>
+
+      <View style={{ position: 'absolute', top: -9999, left: 0 }}>
+        <ShareResultCard ref={shareCardRef} result={result} />
       </View>
 
     </View>
