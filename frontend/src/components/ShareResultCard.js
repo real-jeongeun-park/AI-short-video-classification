@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { colors, spacing, radius } from '../theme/colors';
+import { Feather } from '@expo/vector-icons';
 
 const formatDate = (dateString) => {
   if (!dateString) return '-';
@@ -21,20 +22,22 @@ const ShareResultCard = forwardRef(({ result }, ref) => {
       <View style={styles.resultCard}>
         <View>
           {result.thumbnail_url ? (
-            <Image source={{ uri: result.thumbnail_url }} style={styles.thumb} />
+            <View style={styles.imageWrap}>
+              <Image source={{ uri: result.thumbnail_url }} style={styles.thumb} />
+            </View>
           ) : (
             <View style={[styles.thumb, styles.thumbPlaceholder]} />
           )}
-          <View style={[styles.badge, { backgroundColor: accent + '22', borderColor: accent }]}>
-            <Text style={[styles.badgeText, { color: accent }]}>{label ? 'AI' : 'Real'}</Text>
-          </View>
         </View>
 
         <View style={styles.resultInfo}>
           <Text style={styles.caption}>AI 생성 확률</Text>
           <Text style={[styles.scoreText, { color: accent }]}>{aiScore}%</Text>
           <Text style={styles.description}>
-            {label ? '이 숏폼은 AI가\n생성했을 확률이 높아요.' : '이 숏폼은 AI가\n생성했을 확률이 낮아요.'}
+            이 숏폼은 AI가{"\n"}생성했을 확률이{" "}
+            <Text style={styles.description_pred}>
+              {label ? '높아요' : '낮아요'}
+            </Text>
           </Text>
         </View>
       </View>
@@ -97,7 +100,20 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     width: '100%',
   },
-  thumb: { width: 100, height: 130, borderRadius: radius.md },
+  imageWrap: {
+    width: 100,
+    height: 130,
+    borderRadius: radius.md,
+    marginLeft: spacing.sm,
+    marginRight: spacing.xs,   // md → xs
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  thumb: {
+    width: '100%',
+    height: '100%',
+    transform: [{ scale: 1.4, }]
+  },
   thumbPlaceholder: { backgroundColor: colors.surfaceAlt },
   badge: {
     position: 'absolute',
@@ -109,11 +125,16 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
   },
   badgeText: { fontSize: 13, fontWeight: '700' },
-  resultInfo: { flex: 1, marginLeft: spacing.md, justifyContent: 'center', alignItems: 'center' },
+  resultInfo: {
+    flex: 1,
+    marginLeft: 0,              // xs → 0
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   caption: { fontSize: 15, color: colors.textPrimary },
   scoreText: { fontSize: 34, fontWeight: '800', marginTop: 4 },
-  description: { fontSize: 14, color: colors.textSecondary, marginTop: spacing.sm, textAlign: 'center' },
-
+  description: { fontSize: 12, color: colors.textSecondary, marginTop: spacing.xs, textAlign: 'center', lineHeight: 23, },
+  description_pred: { fontSize: 12, color: colors.textSecondary, textAlign: 'center', fontWeight: 700, },
   infoCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -163,15 +184,18 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: radius.pill,
   },
-  keywordChipText: { fontSize: 12.5, color: colors.textPrimary, fontWeight: '600' },
+  keywordChipText: { fontSize: 10.5, color: colors.textPrimary, fontWeight: '600' },
 
   watermarkLogo: {
-    width: 100,
-    height: 22,
+    width: 125,
+    height: 27.5,
     marginTop: spacing.lg,
     marginRight: -spacing.sm,
     alignSelf: 'flex-end',
   },
+
+  description: { fontSize: 14, color: colors.textSecondary, marginTop: spacing.xs, textAlign: 'center', lineHeight: 23, },
+  description_pred: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', fontWeight: 700, },
 });
 
 export default ShareResultCard;
