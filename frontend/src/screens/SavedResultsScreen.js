@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, Image, StyleSheet, SafeAreaView, FlatList, TouchableOpacity } from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { FontAwesome } from '@expo/vector-icons';
+import { Feather, FontAwesome } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../theme/colors';
 import * as SecureStore from "expo-secure-store";
 
@@ -190,7 +189,9 @@ export default function SavedResultsScreen({ navigation }) {
             onPress={() => navigation.navigate('Result', { result: item })}
           >
             {item.thumbnail_url ? (
-              <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} resizeMode="cover"/>
+              <View style={styles.imageWrap}>
+                <Image source={{ uri: item.thumbnail_url }} style={styles.thumb}/>
+              </View>
             ) : (
               <View style={[styles.thumb, styles.thumbPlaceholder]} />
             )}
@@ -232,7 +233,8 @@ const styles = StyleSheet.create({
   tabText: { color: colors.textSecondary, fontWeight: '700', },
   tabTextActive: { color: '#fff' },
   card: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md, alignItems: 'center' },
-  thumb: { width: 64, height: 64, borderRadius: radius.sm },
+  imageWrap: { width: 64, height: 64, borderRadius: radius.sm, backgroundColor: colors.surface, overflow: 'hidden', },
+  thumb: { width: '100%', height: '100%', transform: [{ scale: 1.8, }] },
   info: { flex: 1, marginLeft: spacing.md },
   caption: { color: colors.textSecondary, fontSize: 12 },
   score: { fontSize: 22, fontWeight: '800', marginTop: 2 },

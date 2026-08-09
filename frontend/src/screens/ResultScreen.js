@@ -92,7 +92,9 @@ export default function ResultScreen({ navigation, route }) {
       <View style={styles.resultCard}>
         <View>
           {result.thumbnail_url ? (
-            <Image source={{ uri: result.thumbnail_url }} style={styles.thumb} />
+            <View style={styles.imageWrap}>
+              <Image source={{ uri: result.thumbnail_url }} style={styles.thumb} />
+            </View>
           ) : (
             <View style={[styles.thumb, styles.thumbPlaceholder]}>
               <Feather name="video" size={24} color={colors.textPlaceholder} />
@@ -192,7 +194,20 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginTop: spacing.lg,
   },
-  thumb: { width: 100, height: 130, borderRadius: radius.md },
+  imageWrap: {
+    width: 100,
+    height: 130,
+    borderRadius: radius.md,
+    marginLeft: spacing.sm,
+    marginRight: spacing.md,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  thumb: {
+    width: '100%',
+    height: '100%',
+    transform: [{ scale: 1.4, }]
+  },
   thumbPlaceholder: {
     backgroundColor: colors.surfaceAlt,
     alignItems: 'center',

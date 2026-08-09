@@ -94,6 +94,7 @@ def get_history(data: HistoryRequest, db: Session = Depends(get_db)):
             query = query.filter(Video.is_ai_generated == False)
 
         if data.api_sort == "LATEST":
+            # 내가 이 영상을 마지막으로 분석한 시점 기준으로 정렬 (히스토리 화면이므로)
             query = query.order_by(desc(user_latest_subq.c.user_latest))
         elif data.api_sort == "PROBABILITY":
             # AI는 확률 높은 순(내림차순), REAL은 확률 낮은 순(오름차순)으로 정렬
@@ -113,10 +114,10 @@ def get_history(data: HistoryRequest, db: Session = Depends(get_db)):
                 "thumbnail_url": video.thumbnail if video.thumbnail else "https://dummy-image-url.com/thumb.jpg",
                 "result_type": "AI" if video.is_ai_generated else "REAL",
                 "ai_probability": round(video.ai_probability * 100, 1),
-                "is_saved": bookmark_id is not None,
-                "date": global_latest if global_latest else None,
-                "user_date": user_latest if user_latest else None,
-                "keywords": video.keyword
+                "is_bookmarked": bookmark_id is not None,
+                "date": global_latest.isoformat() if global_latest else None,
+                "user_date": user_latest.isoformat() if user_latest else None,
+                "keywords": video.keyword.split(",") if video.keyword else []
             })
 
         # 요약 통계는 필터와 무관하게, 이 유저가 분석한 전체 distinct 영상 기준

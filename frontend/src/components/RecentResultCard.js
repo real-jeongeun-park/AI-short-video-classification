@@ -34,15 +34,15 @@ export default function RecentResultCard({ item, onPress }) {
 }
 
 const styles = StyleSheet.create({
-  card: { width: 160, marginRight: spacing.md },
+  card: { width: 155, },
   imageWrap: {
-    width: 160,
-    height: 200,
+    width: 140,
+    height: 249,
     borderRadius: radius.md,
     overflow: 'hidden',
     backgroundColor: colors.surface,
   },
-  image: { width: '100%', height: '100%' },
+  image: { width: '100%', height: '100%', },
   info: {
     marginTop: spacing.md,
   },

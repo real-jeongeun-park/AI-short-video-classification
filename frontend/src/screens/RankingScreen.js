@@ -73,7 +73,7 @@ export default function RankingScreen({ navigation, route }) {
       <View style={styles.searchBox}>
         <TextInput
           style={styles.searchInput}
-          placeholder="키워드 검색"
+          placeholder="타이틀, 키워드, 또는 동영상 URL 입력"
           placeholderTextColor={colors.textPlaceholder}
           value={searchText}
           onChangeText={setSearchText}
@@ -93,59 +93,69 @@ export default function RankingScreen({ navigation, route }) {
         ))}
       </View>
 
-      <FlatList
-        data={data}
-        keyExtractor={(item) => String(item.video_id)}
-        contentContainerStyle={{ paddingBottom: spacing.xl }}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item, index }) => {
-          const isAI = item.result_type === 'AI';
-          const accent = isAI ? colors.danger : colors.primary;
-          const displayCount = item.analysis_count || 1;
+    <FlatList
+      data={data}
+      keyExtractor={(item) => String(item.video_id)}
+      contentContainerStyle={{ paddingBottom: spacing.xl }}
+      showsVerticalScrollIndicator={false}
+      renderItem={({ item, index }) => {
+        const isAI = item.result_type === 'AI';
+        const accent = isAI ? colors.danger : colors.primary;
+        const displayCount = item.analysis_count || 1;
 
-          return (
-            <View style={styles.row}>
-              <TouchableOpacity
-                activeOpacity={0.85}
-                style={styles.rowTouchable}
-                onPress={() => {
-                  const formattedResult = {
-                    ...item,
-                    is_ai_generated: item.result_type === 'AI',
-                    thumbnail: item.thumbnail_url,
-                    keywords: Array.isArray(item.keywords) ? item.keywords.join(',') : item.keywords,
-                    ai_probability: item.ai_probability,
-                    date: item.date 
-                  };
-                  navigation.navigate('Result', { result: formattedResult });
-                }}
-              >
-                <Text style={styles.rank}>{index + 1}</Text>
+        return (
+          <View style={styles.row}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={styles.touchableArea}
+              onPress={() => {
+                const formattedResult = {
+                  ...item,
+                  is_ai_generated: item.result_type === 'AI',
+                  thumbnail: item.thumbnail_url,
+                  keywords: Array.isArray(item.keywords) ? item.keywords.join(',') : item.keywords,
+                  ai_probability: item.ai_probability,
+                  date: item.date,
+                };
+                navigation.navigate('Result', { result: formattedResult });
+              }}
+            >
+              <Text style={styles.rank}>{index + 1}</Text>
+
+              <View style={styles.imageWrap}>
                 <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} />
-                <View style={styles.rowInfo}>
-                  <Text numberOfLines={1} style={styles.title}>{item.title}</Text>
-                  <Text style={styles.count}>{displayCount.toLocaleString()}회 판별</Text>
+              </View>
+
+              <View style={styles.rowInfo}>
+                <Text numberOfLines={1} style={styles.title}>{item.title}</Text>
+                <Text style={styles.count}>{displayCount.toLocaleString()}회 판별</Text>
+              </View>
+
+              <View style={styles.badgeWrap}>
+                <View style={[styles.verdictPill, { backgroundColor: accent + '22', borderColor: accent }]}>
+                  <Text style={[styles.verdictPillText, { color: accent }]}>{item.result_type}</Text>
                 </View>
-                <View style={styles.badgeWrap}>
-                  <View style={[styles.verdictPill, { backgroundColor: accent + '22', borderColor: accent }]}>
-                    <Text style={[styles.verdictPillText, { color: accent }]}>{item.result_type}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+
+            {item.keywords && item.keywords.length > 0 ? (
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 style={styles.tagRow}
                 contentContainerStyle={styles.tagRowContent}
               >
-                {(item.keywords || []).map((k) => (
+                {item.keywords.map((k) => (
                   <Text key={k} style={styles.tag}>#{k}</Text>
                 ))}
               </ScrollView>
-            </View>
-          );
-        }}
-      />
+            ): (
+              <View style={{ marginBottom: 5, }}/>
+            )}
+          </View>
+        );
+      }}
+    />
     </View>
   );
 }
@@ -208,38 +218,69 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   row: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
     width: '100%',
   },
-  rowTouchable: {
+  touchableArea: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
   },
   rank: {
     width: 24,
     color: colors.textPrimary,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
+    textAlign: 'center',
   },
-  thumb: {
+
+  imageWrap: {
     width: 56,
     height: 56,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
+    marginLeft: spacing.sm,
     marginRight: spacing.md,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  thumb: {
+    width: '100%',
+    height: '100%',
+    transform: [{ scale: 1.75, }]
   },
   rowInfo: {
     flex: 1,
-    marginRight: spacing.sm,
-    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 7,
+  },
+  title: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
   },
   count: {
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 2,
   },
+  badgeWrap: {
+    marginLeft: spacing.sm,
+    alignSelf: 'flex-start',
+    marginTop: 7,
+  },
+  verdictPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+  },
+  verdictPillText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
   tagRow: {
-    marginLeft: 24 + 56 + spacing.md,
-    width: '70%',
+    marginTop: spacing.xs,
+    marginLeft: 24 + spacing.sm + 56 + spacing.md, // rank + thumb 너비만큼 밀어서 title/count와 좌측 정렬
   },
   tagRowContent: {
     flexDirection: 'row',
@@ -253,19 +294,5 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 6,
     marginRight: spacing.xs,
-  },
-  badgeWrap: {
-    alignSelf: 'center',
-    justifyContent: 'center',
-  },
-  verdictPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: radius.pill,
-    borderWidth: 0.5,
-  },
-  verdictPillText: {
-    fontSize: 13,
-    fontWeight: '700',
   },
 });

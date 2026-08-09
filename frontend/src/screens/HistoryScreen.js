@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, SafeAreaView, FlatList, TouchableOpacity } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Feather, FontAwesome } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../theme/colors';
 import * as SecureStore from 'expo-secure-store';
 
 const SORTS = ['최신순', 'AI 생성 확률순'];
 
 const formatDate = (dateString) => {
-  if (!dateString) return '';
-  return typeof dateString === 'string' ? dateString.split('T')[0].replace(/-/g, '.') : '';
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
 };
 
 export default function HistoryScreen({ navigation }) {
@@ -49,9 +53,9 @@ export default function HistoryScreen({ navigation }) {
             api_sort: apiSort,
           }),
         });
-                
+
         const json = await response.json();
-        
+
         if (json.isSuccess) {
           setData(json.result.history);
           setSummary(json.result.summary);
@@ -63,6 +67,47 @@ export default function HistoryScreen({ navigation }) {
 
     fetchHistory();
   }, [tab, sort, userId]);
+
+  const handleBookmarkChange = async (videoId, isBookmarked) => {
+    if (!userId) return;
+
+    const nextIsBookmarked = !isBookmarked;
+
+    // 낙관적 업데이트: 해당 항목만 화면에서 먼저 반영
+    setData((prev) =>
+      prev.map((item) =>
+        item.video_id === videoId ? { ...item, is_bookmarked: nextIsBookmarked } : item
+      )
+    );
+
+    try {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/bookmarks`, {
+        method: nextIsBookmarked ? "POST" : "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          video_id: videoId,
+          user_id: Number(userId),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail);
+      }
+
+    } catch (error) {
+      console.error("handleBookmarkChange error:", error);
+
+      // 실패 시 원래 상태로 되돌림
+      setData((prev) =>
+        prev.map((item) =>
+          item.video_id === videoId ? { ...item, is_bookmarked: isBookmarked } : item
+        )
+      );
+      alert("북마크 변경에 실패했습니다.");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -120,11 +165,11 @@ export default function HistoryScreen({ navigation }) {
         keyExtractor={(item) => String(item.video_id)}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
 
-        initialNumToRender={20}      
-        maxToRenderPerBatch={20}    
-        windowSize={10}             
+        initialNumToRender={20}
+        maxToRenderPerBatch={20}
+        windowSize={10}
         removeClippedSubviews={true}
-        
+
         renderItem={({ item }) => (
           <TouchableOpacity
             activeOpacity={0.85}
@@ -141,9 +186,10 @@ export default function HistoryScreen({ navigation }) {
               navigation.navigate('Result', { result: formattedResult });
             }}
           >
-            {/* [수정] 썸네일 이미지가 없으면 뼈대만 보여주도록 개선 */}
             {item.thumbnail_url ? (
-              <Image source={{ uri: item.thumbnail_url }} style={styles.thumb} resizeMode="cover" />
+              <View style={styles.imageWrap}>
+                <Image source={{ uri: item.thumbnail_url }} style={styles.thumb}/>
+              </View>
             ) : (
               <View style={[styles.thumb, { backgroundColor: colors.surfaceAlt }]} />
             )}
@@ -152,19 +198,19 @@ export default function HistoryScreen({ navigation }) {
               <Text style={styles.caption}>
                 AI 생성확률 <Text style={[styles.scoreInline, { color: accent }]}>{item.ai_probability}%</Text>
               </Text>
-              {/* [수정] 날짜 포맷 함수 적용 */}
               <Text style={styles.date}>최근 분석일: {formatDate(item.user_date)}</Text>
             </View>
-            <View
-              style={[
-                styles.bookmark,
-                item.is_saved
-                  ? { backgroundColor: accent + '22', borderWidth: 0.5, borderColor: accent }
-                  : { backgroundColor: colors.surfaceAlt },
-              ]}
+            <TouchableOpacity
+              style={tab === 'AI' ? styles.bookmark_true : styles.bookmark_false}
+              onPress={() => handleBookmarkChange(item.video_id, item.is_bookmarked)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Feather name="bookmark" size={16} color={item.is_saved ? accent : colors.textSecondary} />
-            </View>
+              <FontAwesome
+                name={item.is_bookmarked ? 'bookmark' : 'bookmark-o'}
+                size={16}
+                color={accent}
+              />
+            </TouchableOpacity>
           </TouchableOpacity>
         )}
       />
@@ -194,11 +240,13 @@ const styles = StyleSheet.create({
   },
   sortOption: { color: colors.textSecondary, paddingVertical: 6, paddingHorizontal: spacing.sm },
   card: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md, alignItems: 'center' },
-  thumb: { width: 84, height: 84, borderRadius: radius.md },
+  imageWrap: { width: 84, height: 84, borderRadius: radius.sm, backgroundColor: colors.surface, overflow: 'hidden', },
+  thumb: { width: '100%', height: '100%', transform: [{ scale: 1.8, }] },
   info: { flex: 1, marginLeft: spacing.md, justifyContent: 'center' },
-  itemTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '700' },
+  itemTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '700', width: '95%', },
   caption: { color: colors.textSecondary, fontSize: 13, marginTop: 10 },
   scoreInline: { fontSize: 13, fontWeight: '600' },
   date: { color: colors.textSecondary, fontSize: 12, marginTop: spacing.xs },
-  bookmark: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  bookmark_true: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.danger + '22', borderWidth: 0.5, borderColor: colors.danger },
+  bookmark_false: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary + '22', borderWidth: 0.5, borderColor: colors.primary },
 });
