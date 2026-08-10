@@ -33,7 +33,7 @@ class Video(Base):
     title = Column(String(255))
     url = Column(Text, nullable=False, unique=True)
     keyword = Column(String(255))
-    thumbnail = Column(String(255))
+    thumbnail = Column(Text, nullable=True)
     ai_probability = Column(Float, nullable=False)  # 0.0 ~ 1.0
     is_ai_generated = Column(Boolean, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

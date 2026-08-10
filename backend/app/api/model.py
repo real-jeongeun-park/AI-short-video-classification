@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+import traceback
 
 from app.database import get_db
 from app.models import Video, DetectionLog
@@ -57,4 +58,8 @@ def analyze(data: AnalyzeRequest, db: Session = Depends(get_db)):
 
     except Exception as ex:
         db.rollback()
+        print("========================================")
+        print("🔥 분석 중 에러 발생! 상세 로그:")
+        traceback.print_exc()  
+        print("========================================")
         raise HTTPException(status_code=500, detail=str(ex))
