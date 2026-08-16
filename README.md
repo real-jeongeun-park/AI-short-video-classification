@@ -1,6 +1,6 @@
 # 👁️ AI's on
-AI's on은 소셜미디어에 업로드된 숏폼 동영상들의 AI 생성 여부를 판독하는 앱 서비스입니다.
-
+AI's on은 소셜미디어에 업로드된 **숏폼 동영상들의 AI 생성 여부를 판독하는 앱 서비스**입니다.<br>
+모델 학습에 사용된 데이터셋은 [MVAD](https://github.com/HuMengXue0104/MVAD)이며, 20만 장 중 약 12,000장에 대한 훈련을 수행하였습니다.
 
 ## 🧐 서비스 기획
 
@@ -13,9 +13,13 @@ AI's on은 소셜미디어에 업로드된 숏폼 동영상들의 AI 생성 여�
 <img width="1920" height="1080" alt="AI생성숏폼구별서비스_발표자료_page-0008" src="https://github.com/user-attachments/assets/c22aa0b5-1b93-4f86-9bdc-737e5365c077" />
 <img width="1920" height="1080" alt="AI생성숏폼구별서비스_발표자료_page-0009" src="https://github.com/user-attachments/assets/f1fba3e5-98be-4747-b5d0-ea20b6dfe44e" />
 <img width="1920" height="1080" alt="AI생성숏폼구별서비스_발표자료_page-0010" src="https://github.com/user-attachments/assets/6a55cebe-b2c5-46b9-9b9f-952044dc4b24" />
+
+## 🛠️ 서비스 아키텍처
+
 <img width="1920" height="1080" alt="AI생성숏폼구별서비스_발표자료_page-0011" src="https://github.com/user-attachments/assets/565a818b-a481-4395-a00d-ac490b4632cf" />
 
 ## 🧠 데이터셋 및 모델 아키텍처
+
 <img width="1920" height="1080" alt="AI생성숏폼구별서비스_발표자료_page-0013" src="https://github.com/user-attachments/assets/d814fa4b-ec08-4e4e-946b-8db23ffeb794" />
 <img width="1920" height="1080" alt="AI생성숏폼구별서비스_발표자료_page-0014" src="https://github.com/user-attachments/assets/83b72475-a9f1-480b-a93f-e25bd9d0af54" />
 <img width="1920" height="1080" alt="AI생성숏폼구별서비스_발표자료_page-0015" src="https://github.com/user-attachments/assets/a3872b56-1dff-467b-a86d-615fb355fc87" />
