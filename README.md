@@ -1,6 +1,6 @@
 # 👁️ AI's on
-AI's on은 소셜미디어에 업로드된 **숏폼 동영상들의 AI 생성 여부를 판독하는 앱 서비스**입니다.<br>
-모델 학습에 사용된 데이터셋은 [MVAD](https://github.com/HuMengXue0104/MVAD)이며, 20만 개의 데이터 중 약 12,000개에 대한 훈련을 수행하였습니다.
+<img width="1920" height="1080" alt="AI생성숏폼구별서비스_발표자료-이미지-0" src="https://github.com/user-attachments/assets/798d3d46-1a55-488f-a67d-2a459d99ddf6" />
+
 
 ## 🧐 서비스 기획
 
